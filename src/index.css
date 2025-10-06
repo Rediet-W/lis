@@ -1,13 +1,22 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Custom styles for medical application */
+@layer components {
+  .sidebar-item {
+    @apply w-full flex items-center px-4 py-3 text-left transition duration-200 hover:bg-[#1a4a5a];
+  }
+
+  .sidebar-item.active {
+    @apply bg-[#36F1A2] text-[#235F72];
+  }
+
+  .btn-primary {
+    @apply bg-[#235F72] text-white px-6 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-[#36F1A2] text-[#235F72] px-6 py-2 rounded-lg hover:bg-[#2dd191] transition duration-200;
+  }
 }
