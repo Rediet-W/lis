@@ -1,4 +1,3 @@
-// components/receptionist/PatientRegistration.jsx
 import React, { useState } from "react";
 
 const PatientRegistration = () => {

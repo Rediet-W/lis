@@ -20,7 +20,7 @@ import PatientSearch from "./components/receptionist/PatientSearch";
 import TestOrders from "./components/receptionist/TestOrders";
 
 // Laboratory Components
-import LabDashboard from "./components/laboratory/Dashboard";
+import Dashboard from "./components/laboratory/Dashboard";
 import PendingTests from "./components/laboratory/PendingTests";
 import CompletedTests from "./components/laboratory/CompletedTests";
 import ResultEntryForm from "./components/laboratory/ResultEntryForm";
@@ -41,11 +41,16 @@ import ClinicSettings from "./components/admin/ClinicSettings";
 import Header from "./components/common/Header";
 import Sidebar from "./components/common/Sidebar";
 
+import PrintDetailedReport from "./components/reports/printResults";
+
+import { useLocation } from "react-router-dom";
+
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
 
   if (!user) {
+    console.log("no user");
     return <Navigate to="/login" replace />;
   }
 
@@ -56,10 +61,42 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-// Layout Component for authenticated pages
+// In AppLayout:
 const AppLayout = ({ children, title }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState("dashboard");
+  const location = useLocation();
+
+  // Map paths to tab ids
+  const pathToTab = (pathname) => {
+    if (pathname.startsWith("/receptionist/dashboard")) return "dashboard";
+    if (pathname.startsWith("/receptionist/register-patient"))
+      return "register";
+    if (pathname.startsWith("/receptionist/search-patient")) return "search";
+    if (pathname.startsWith("/receptionist/test-orders")) return "orders";
+    if (pathname.startsWith("/receptionist/today-visits")) return "visits";
+    if (pathname.startsWith("/laboratory/pending-tests")) return "pending";
+    if (pathname.startsWith("/laboratory/completed-tests")) return "completed";
+    if (pathname.startsWith("/laboratory/results-history")) return "history";
+    if (pathname.startsWith("/patient/dashboard")) return "dashboard";
+    if (pathname.startsWith("/patient/results")) return "results";
+    if (pathname.startsWith("/patient/profile")) return "profile";
+    if (pathname.startsWith("/patient/history")) return "history";
+    if (pathname.startsWith("/admin/dashboard")) return "dashboard";
+    if (pathname.startsWith("/admin/users")) return "users";
+    if (pathname.startsWith("/admin/tests")) return "tests";
+    if (pathname.startsWith("/admin/clinic-settings")) return "clinic";
+    if (pathname.startsWith("/admin/activity-logs")) return "activity";
+    if (pathname.startsWith("/admin/system-settings")) return "system";
+    return "";
+  };
+
+  const [activeTab, setActiveTab] = React.useState(() =>
+    pathToTab(location.pathname)
+  );
+
+  React.useEffect(() => {
+    setActiveTab(pathToTab(location.pathname));
+  }, [location.pathname]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -140,7 +177,7 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
                   <AppLayout title="Laboratory Dashboard">
-                    <LabDashboard />
+                    <Dashboard />
                   </AppLayout>
                 </ProtectedRoute>
               }
@@ -256,6 +293,21 @@ function App() {
                   <AppLayout title="Clinic Settings">
                     <ClinicSettings />
                   </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/print-report"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "admin",
+                    "laboratorist",
+                    "receptionist",
+                    "patient",
+                  ]}
+                >
+                  <PrintDetailedReport />
                 </ProtectedRoute>
               }
             />

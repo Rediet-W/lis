@@ -1,4 +1,3 @@
-// components/admin/TestManagement.jsx
 import React, { useState } from "react";
 
 const TestManagement = () => {
@@ -71,9 +70,9 @@ const TestManagement = () => {
               <span className="mr-2">←</span>
               Back
             </button>
-            <h1 className="text-2xl font-bold text-[#235F72]">
+            {/* <h1 className="text-2xl font-bold text-[#235F72]">
               Test Management
-            </h1>
+            </h1> */}
           </div>
           <button className="bg-[#235F72] text-white px-6 py-3 rounded-lg hover:bg-[#1a4a5a] transition duration-200 font-semibold">
             Add New Test

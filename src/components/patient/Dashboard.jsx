@@ -1,9 +1,10 @@
-// components/patient/Dashboard.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
 
   const recentTests = [
     {
@@ -23,7 +24,7 @@ const Dashboard = () => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div
+      {/* <div
         className={`${
           sidebarOpen ? "w-64" : "w-20"
         } bg-[#235F72] text-white transition-all duration-300`}
@@ -64,24 +65,11 @@ const Dashboard = () => {
             </button>
           ))}
         </nav>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b px-6 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#235F72]">
-              Patient Portal
-            </h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Welcome, Abel!</span>
-              <button className="bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200">
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
 
         {/* Dashboard Content */}
         <main className="p-6">
@@ -142,7 +130,10 @@ const Dashboard = () => {
                           </p>
                         </div>
                         <div className="flex space-x-2 ml-4">
-                          <button className="bg-[#085DB6] text-white px-4 py-2 rounded-lg hover:bg-[#074a9b] transition duration-200 text-sm">
+                          <button
+                            className="bg-[#085DB6] text-white px-4 py-2 rounded-lg hover:bg-[#074a9b] transition duration-200 text-sm"
+                            onClick={() => navigate("/print-report")}
+                          >
                             View Report
                           </button>
                           <button className="border border-[#36F1A2] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#36F1A2] transition duration-200 text-sm">

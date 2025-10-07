@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("pending");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
 
   const pendingTests = [
     {
@@ -75,7 +76,10 @@ const Dashboard = () => {
                       )}
                     </div>
 
-                    <button className="ml-4 bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200 font-medium whitespace-nowrap">
+                    <button
+                      className="ml-4 bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200 font-medium whitespace-nowrap"
+                      onClick={() => navigate("/laboratory/enter-results")}
+                    >
                       Enter Results
                     </button>
                   </div>

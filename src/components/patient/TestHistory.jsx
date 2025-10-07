@@ -1,5 +1,5 @@
-// components/patient/TestHistory.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const TestHistory = () => {
   const [filters, setFilters] = useState({
@@ -45,6 +45,7 @@ const TestHistory = () => {
       results: "Negative",
     },
   ];
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -62,25 +63,27 @@ const TestHistory = () => {
 
       {/* Filter Options */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Date Range */}
+          <div className="min-w-0 ">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Date Range
             </label>
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
               <input
                 type="date"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
+                className=" px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
               />
-              <span className="self-center">to</span>
+              <span className="self-center text-center">to</span>
               <input
                 type="date"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
+                className=" px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
               />
             </div>
           </div>
 
-          <div>
+          {/* Test Type */}
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Test Type
             </label>
@@ -92,7 +95,8 @@ const TestHistory = () => {
             </select>
           </div>
 
-          <div>
+          {/* Status */}
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Status
             </label>
@@ -103,7 +107,8 @@ const TestHistory = () => {
             </select>
           </div>
 
-          <div className="flex items-end">
+          {/* Apply Filters Button */}
+          <div className="flex items-end min-w-0">
             <button className="w-full bg-[#235F72] text-white py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200">
               Apply Filters
             </button>
@@ -154,7 +159,10 @@ const TestHistory = () => {
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    <button className="text-[#085DB6] hover:text-[#074a9b] font-medium">
+                    <button
+                      className="text-[#085DB6] hover:text-[#074a9b] font-medium"
+                      onClick={() => navigate("/print-report")}
+                    >
                       View
                     </button>
                   </td>

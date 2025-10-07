@@ -22,10 +22,10 @@ const ClinicSettings = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#235F72]">Clinic Settings</h1>
         <p className="text-gray-600">Manage clinic information and settings</p>
-      </div>
+      </div> */}
 
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
         {/* Header with Edit Button */}

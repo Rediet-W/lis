@@ -1,8 +1,9 @@
-// components/lab/CompletedTests.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CompletedTests = () => {
   const [dateRange, setDateRange] = useState("today");
+  const navigate = useNavigate();
 
   const completedTests = [
     {
@@ -37,14 +38,14 @@ const CompletedTests = () => {
   return (
     <div className="max-w-6xl mx-auto p-6">
       {/* Header */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#235F72]">
           Completed Tests History
         </h1>
         <p className="text-gray-600">
           View and manage completed laboratory tests
         </p>
-      </div>
+      </div> */}
 
       {/* Date Range Filter */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
@@ -136,7 +137,10 @@ const CompletedTests = () => {
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex space-x-2">
-                      <button className="text-[#085DB6] hover:text-[#074a9b] font-medium text-sm">
+                      <button
+                        className="text-[#085DB6] hover:text-[#074a9b] font-medium text-sm"
+                        onClick={() => navigate("/print-report")}
+                      >
                         View
                       </button>
                       <span className="text-gray-300">|</span>

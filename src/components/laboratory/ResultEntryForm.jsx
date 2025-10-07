@@ -1,4 +1,3 @@
-// components/lab/ResultEntryForm.jsx
 import React, { useState } from "react";
 
 const ResultEntryForm = () => {

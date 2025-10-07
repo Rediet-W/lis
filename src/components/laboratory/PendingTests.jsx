@@ -1,5 +1,5 @@
-// components/lab/PendingTests.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PendingTests = () => {
   const [filter, setFilter] = useState("all");
@@ -58,6 +58,7 @@ const PendingTests = () => {
     };
     return `px-2 py-1 text-xs rounded-full border ${styles[priority]}`;
   };
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -197,7 +198,10 @@ const PendingTests = () => {
                 </div>
 
                 <div className="ml-4 flex flex-col space-y-2">
-                  <button className="bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200 font-medium">
+                  <button
+                    className="bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200 font-medium"
+                    onClick={() => navigate("/laboratory/enter-results")}
+                  >
                     Enter Results
                   </button>
                   <button className="border border-[#085DB6] text-[#085DB6] px-4 py-2 rounded-lg hover:bg-[#085DB6] hover:text-white transition duration-200">

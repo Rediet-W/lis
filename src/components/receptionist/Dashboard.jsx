@@ -1,9 +1,7 @@
-// components/receptionist/Dashboard.jsx
 import React, { useState } from "react";
 
 const ReceptionistDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const stats = [
     { label: "Today Patients", value: "15", color: "bg-[#36F1A2]" },
@@ -13,68 +11,8 @@ const ReceptionistDashboard = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-[#235F72] text-white transition-all duration-300`}
-      >
-        <div className="p-4 flex items-center justify-between">
-          {sidebarOpen && (
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-[#36F1A2] rounded-full mr-3"></div>
-              <span className="font-bold text-lg">FineCare</span>
-            </div>
-          )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-white"
-          >
-            {sidebarOpen ? "◀" : "▶"}
-          </button>
-        </div>
-
-        <nav className="mt-8">
-          {[
-            { icon: "📊", label: "Dashboard", id: "dashboard" },
-            { icon: "👥", label: "Register Patient", id: "register" },
-            { icon: "🔍", label: "Search Patient", id: "search" },
-            { icon: "🏥", label: "Test Orders", id: "orders" },
-            { icon: "📋", label: "Today Visits", id: "visits" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center px-4 py-3 text-left transition duration-200 ${
-                activeTab === item.id
-                  ? "bg-[#36F1A2] text-[#235F72]"
-                  : "hover:bg-[#1a4a5a]"
-              }`}
-            >
-              <span className="text-xl mr-3">{item.icon}</span>
-              {sidebarOpen && <span>{item.label}</span>}
-            </button>
-          ))}
-        </nav>
-      </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b px-6 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#235F72]">
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-            </h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Welcome, Receptionist!</span>
-              <button className="bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200">
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
         {/* Dashboard Content */}
         <main className="p-6">
           {activeTab === "dashboard" && (

@@ -1,4 +1,3 @@
-// src/components/receptionist/TestOrders.jsx
 import React, { useState } from "react";
 
 const TestOrders = () => {

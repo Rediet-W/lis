@@ -1,4 +1,3 @@
-// components/patient/ProfilePage.jsx
 import React, { useState } from "react";
 
 const ProfilePage = () => {
@@ -28,12 +27,12 @@ const ProfilePage = () => {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <button className="flex items-center text-[#085DB6] hover:text-[#074a9b] mb-4">
+        {/* <button className="flex items-center text-[#085DB6] hover:text-[#074a9b] mb-4">
           <span className="mr-2">←</span>
           Back to Dashboard
-        </button>
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#235F72]">My Profile</h1>
+        </button> */}
+        <div className="flex justify-end items-center">
+          {/* <h1 className="text-2xl font-bold text-[#235F72]">My Profile</h1> */}
           <button
             onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
             className="bg-[#235F72] text-white px-6 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200"
