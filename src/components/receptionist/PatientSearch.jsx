@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const PatientSearch = () => {
+  const navigate = useNavigate();
   const [searchType, setSearchType] = useState("card");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -41,6 +43,13 @@ const PatientSearch = () => {
       patient.cardNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.phone.includes(searchTerm)
   );
+
+  const handleSelectPatient = (patient) => {
+    // Navigate to patient details with patient ID
+    navigate(`/receptionist/patient-details/${patient.id}`, {
+      state: { patient },
+    });
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -178,13 +187,26 @@ const PatientSearch = () => {
           </div>
 
           <div className="flex space-x-3">
-            <button className="bg-[#085DB6] text-white px-4 py-2 rounded-lg hover:bg-[#074a9b] transition duration-200">
+            <button
+              className="bg-[#085DB6] text-white px-4 py-2 rounded-lg hover:bg-[#074a9b] transition duration-200"
+              onClick={() => handleSelectPatient(selectedPatient)}
+            >
               View History
             </button>
-            <button className="bg-[#36F1A2] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#2dd191] transition duration-200">
+            <button
+              className="bg-[#36F1A2] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#2dd191] transition duration-200"
+              onClick={() =>
+                navigate("/receptionist/register-patient", {
+                  state: { patient: selectedPatient },
+                })
+              }
+            >
               Assign Tests
             </button>
-            <button className="border border-[#235F72] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#235F72] hover:text-white transition duration-200">
+            <button
+              className="border border-[#235F72] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#235F72] hover:text-white transition duration-200"
+              onClick={() => handleSelectPatient(selectedPatient)}
+            >
               Edit Info
             </button>
           </div>

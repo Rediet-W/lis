@@ -18,6 +18,7 @@ import ReceptionistDashboard from "./components/receptionist/Dashboard";
 import PatientRegistration from "./components/receptionist/PatientRegistration";
 import PatientSearch from "./components/receptionist/PatientSearch";
 import TestOrders from "./components/receptionist/TestOrders";
+import PatientDetails from "./components/receptionist/PatientDetails";
 
 // Laboratory Components
 import Dashboard from "./components/laboratory/Dashboard";
@@ -171,6 +172,16 @@ function App() {
               }
             />
 
+            <Route
+              path="/receptionist/patient-details/:patientId"
+              element={
+                <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                  <AppLayout title="Patient Details">
+                    <PatientDetails />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
             {/* Laboratory Routes */}
             <Route
               path="/laboratory/dashboard"
