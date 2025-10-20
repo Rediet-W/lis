@@ -1,10 +1,17 @@
 import React from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { logout } from "../../store/slices/authSlice";
 
 const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
-  const { user, logout } = useAuth();
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
 
   const getSidebarItems = () => {
     switch (user?.role) {
@@ -34,12 +41,12 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             id: "orders",
             path: "/receptionist/test-orders",
           },
-          // {
-          //   icon: "📋",
-          //   label: "Today Visits",
-          //   id: "visits",
-          //   path: "/receptionist/today-visits",
-          // },
+          {
+            icon: "📋",
+            label: "Today Visits",
+            id: "visits",
+            path: "/receptionist/today-visits",
+          },
         ];
       case "laboratorist":
         return [
@@ -61,12 +68,12 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             id: "completed",
             path: "/laboratory/completed-tests",
           },
-          // {
-          //   icon: "📊",
-          //   label: "Results History",
-          //   id: "history",
-          //   path: "/laboratory/results-history",
-          // },
+          {
+            icon: "📝",
+            label: "Enter Results",
+            id: "enter-results",
+            path: "/laboratory/enter-results",
+          },
         ];
       case "patient":
         return [
@@ -76,12 +83,6 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             id: "dashboard",
             path: "/patient/dashboard",
           },
-          // {
-          //   icon: "📊",
-          //   label: "My Results",
-          //   id: "results",
-          //   path: "/patient/results",
-          // },
           {
             icon: "👤",
             label: "My Profile",
@@ -127,12 +128,6 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             id: "activity",
             path: "/admin/activity-logs",
           },
-          // {
-          //   icon: "⚙️",
-          //   label: "System Settings",
-          //   id: "system",
-          //   path: "/admin/system-settings",
-          // },
         ];
       default:
         return [];
@@ -171,7 +166,6 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
           <button
             key={item.id}
             onClick={() => {
-              // setActiveTab(item.id);
               navigate(item.path);
             }}
             className={`w-full flex items-center px-4 py-3 text-left transition duration-200 ${
@@ -189,7 +183,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
       {sidebarOpen && (
         <div className="p-4 border-t border-[#1a4a5a]">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition duration-200"
           >
             Logout

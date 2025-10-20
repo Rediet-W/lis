@@ -15,11 +15,16 @@
     ]
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.9.1",
+    "axios": "^1.12.2",
     "lucide-react": "^0.544.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^6.8.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "react-toastify": "^11.0.5",
+    "redux": "^5.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.14",

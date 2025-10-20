@@ -7,12 +7,14 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { Provider } from "react-redux";
+import { store } from "./store"; // Import Redux store
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 // Import all your components
 import LandingPage from "./components/landing/LandingPage";
 import LoginPage from "./components/auth/LoginPage";
-
+import RegisterPage from "./components/auth/RegisterPage";
 // Receptionist Components
 import ReceptionistDashboard from "./components/receptionist/Dashboard";
 import PatientRegistration from "./components/receptionist/PatientRegistration";
@@ -118,235 +120,229 @@ const AppLayout = ({ children, title }) => {
   );
 };
 
-// Main App Component
-function App() {
+// Wrap your app with Redux Provider
+const AppContent = () => {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="App">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
-
-            {/* Receptionist Routes */}
-            <Route
-              path="/receptionist/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                  <AppLayout title="Receptionist Dashboard">
-                    <ReceptionistDashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/receptionist/register-patient"
-              element={
-                <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                  <AppLayout title="Register Patient">
-                    <PatientRegistration />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/receptionist/search-patient"
-              element={
-                <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                  <AppLayout title="Search Patient">
-                    <PatientSearch />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/receptionist/test-orders"
-              element={
-                <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                  <AppLayout title="Test Orders">
-                    <TestOrders />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/receptionist/patient-details/:patientId"
-              element={
-                <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                  <AppLayout title="Patient Details">
-                    <PatientDetails />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            {/* Laboratory Routes */}
-            <Route
-              path="/laboratory/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-                  <AppLayout title="Laboratory Dashboard">
-                    <Dashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/laboratory/pending-tests"
-              element={
-                <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-                  <AppLayout title="Pending Tests">
-                    <PendingTests />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/laboratory/completed-tests"
-              element={
-                <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-                  <AppLayout title="Completed Tests">
-                    <CompletedTests />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/laboratory/enter-results"
-              element={
-                <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-                  <AppLayout title="Enter Test Results">
-                    <ResultEntryForm />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Patient Routes */}
-            <Route
-              path="/patient/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["patient"]}>
-                  <AppLayout title="Patient Portal">
-                    <PatientDashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/patient/profile"
-              element={
-                <ProtectedRoute allowedRoles={["patient"]}>
-                  <AppLayout title="My Profile">
-                    <PatientProfile />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/patient/history"
-              element={
-                <ProtectedRoute allowedRoles={["patient"]}>
-                  <AppLayout title="Test History">
-                    <PatientTestHistory />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Admin Routes */}
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AppLayout title="Admin Dashboard">
-                    <AdminDashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AppLayout title="User Management">
-                    <UserManagement />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/tests"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AppLayout title="Test Management">
-                    <TestManagement />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/activity-logs"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AppLayout title="Activity Logs">
-                    <ActivityLogs />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/clinic-settings"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AppLayout title="Clinic Settings">
-                    <ClinicSettings />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/print-report"
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    "admin",
-                    "laboratorist",
-                    "receptionist",
-                    "patient",
-                  ]}
-                >
-                  <PrintDetailedReport />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Fallback Routes */}
-            <Route
-              path="/receptionist"
-              element={<Navigate to="/receptionist/dashboard" replace />}
-            />
-            <Route
-              path="/laboratory"
-              element={<Navigate to="/laboratory/dashboard" replace />}
-            />
-            <Route
-              path="/patient"
-              element={<Navigate to="/patient/dashboard" replace />}
-            />
-            <Route
-              path="/admin"
-              element={<Navigate to="/admin/dashboard" replace />}
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </AuthProvider>
-    </Router>
+    <AuthProvider>
+      <div className="App">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          {/* Receptionist Routes */}
+          <Route
+            path="/receptionist/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Receptionist Dashboard">
+                  <ReceptionistDashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/register-patient"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Register Patient">
+                  <PatientRegistration />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/search-patient"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Search Patient">
+                  <PatientSearch />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/test-orders"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Test Orders">
+                  <TestOrders />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/patient-details/:patientId"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Patient Details">
+                  <PatientDetails />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Laboratory Routes */}
+          <Route
+            path="/laboratory/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
+                <AppLayout title="Laboratory Dashboard">
+                  <Dashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/laboratory/pending-tests"
+            element={
+              <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
+                <AppLayout title="Pending Tests">
+                  <PendingTests />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/laboratory/completed-tests"
+            element={
+              <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
+                <AppLayout title="Completed Tests">
+                  <CompletedTests />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/laboratory/enter-results"
+            element={
+              <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
+                <AppLayout title="Enter Test Results">
+                  <ResultEntryForm />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Patient Routes */}
+          <Route
+            path="/patient/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["patient"]}>
+                <AppLayout title="Patient Portal">
+                  <PatientDashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/profile"
+            element={
+              <ProtectedRoute allowedRoles={["patient"]}>
+                <AppLayout title="My Profile">
+                  <PatientProfile />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/history"
+            element={
+              <ProtectedRoute allowedRoles={["patient"]}>
+                <AppLayout title="Test History">
+                  <PatientTestHistory />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AppLayout title="Admin Dashboard">
+                  <AdminDashboard />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AppLayout title="User Management">
+                  <UserManagement />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tests"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AppLayout title="Test Management">
+                  <TestManagement />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/activity-logs"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AppLayout title="Activity Logs">
+                  <ActivityLogs />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/clinic-settings"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AppLayout title="Clinic Settings">
+                  <ClinicSettings />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/print-report"
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  "admin",
+                  "laboratorist",
+                  "receptionist",
+                  "patient",
+                ]}
+              >
+                <PrintDetailedReport />
+              </ProtectedRoute>
+            }
+          />
+          {/* Fallback Routes */}
+          <Route
+            path="/receptionist"
+            element={<Navigate to="/receptionist/dashboard" replace />}
+          />
+          <Route
+            path="/laboratory"
+            element={<Navigate to="/laboratory/dashboard" replace />}
+          />
+          <Route
+            path="/patient"
+            element={<Navigate to="/patient/dashboard" replace />}
+          />
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </AuthProvider>
   );
-}
+};
 
 // Unauthorized Page Component
 const UnauthorizedPage = () => {
@@ -371,165 +367,15 @@ const UnauthorizedPage = () => {
   );
 };
 
+// Main App Component with Redux Provider
+function App() {
+  return (
+    <Provider store={store}>
+      <Router>
+        <AppContent />
+      </Router>
+    </Provider>
+  );
+}
+
 export default App;
-
-// import React from "react";
-// import {
-//   BrowserRouter as Router,
-//   Routes,
-//   Route,
-//   Navigate,
-// } from "react-router-dom";
-// import { AuthProvider } from "./contexts/AuthContext";
-// import ProtectedRoute from "./components/auth/ProtectedRoute";
-
-// // Pages
-// // import LandingPage from "./components/landing/LandingPage";
-// // import LoginPage from "./components/auth/LoginPage";
-
-// // Receptionist Routes
-// // import ReceptionistDashboard from "./components/receptionist/Dashboard";
-// // import PatientRegistration from "./components/receptionist/PatientRegistration";
-
-// // Laboratory Routes
-// // import LabDashboard from "./components/laboratory/Dashboard";
-// // import PendingTests from "./components/laboratory/PendingTests";
-// // import ResultEntryForm from "./components/laboratory/ResultEntryForm";
-
-// // // Patient Routes
-// // import PatientDashboard from "./components/patient/Dashboard";
-// // import PatientProfile from "./components/patient/ProfilePage";
-// // import PatientTestHistory from "./components/patient/TestHistory";
-
-// // // Admin Routes
-// // import AdminDashboard from "./components/admin/Dashboard";
-// // import UserManagement from "./components/admin/UserManagement";
-// // import TestManagement from "./components/admin/TestManagement";
-// // import ActivityLogs from "./components/admin/ActivityLogs";
-
-// // // Reports
-// // import PrintReport from "./components/reports/PrintReport";
-
-// function App() {
-//   return (
-//     <AuthProvider>
-//       <Router>
-//         <div className="App">
-//           <Routes>
-//             {/* Public Routes */}
-//             {/* <Route path="/" element={<LandingPage />} />
-//             <Route path="/login" element={<LoginPage />} /> */}
-//             {/* Receptionist Routes */}
-//             {/* <Route
-//               path="/receptionist"
-//               element={
-//                 <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-//                   <ReceptionistDashboard />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/receptionist/register-patient"
-//               element={
-//                 <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-//                   <PatientRegistration />
-//                 </ProtectedRoute>
-//               }
-//             /> */}
-//             {/* Laboratory Routes */}
-//             {/* <Route
-//               path="/laboratory"
-//               element={
-//                 <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-//                   <LabDashboard />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/laboratory/pending-tests"
-//               element={
-//                 <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-//                   <PendingTests />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/laboratory/enter-results"
-//               element={
-//                 <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-//                   <ResultEntryForm />
-//                 </ProtectedRoute>
-//               }
-//             /> */}
-//             {/* Patient Routes */}
-//             {/* <Route
-//               path="/patient"
-//               element={
-//                 <ProtectedRoute allowedRoles={["patient"]}>
-//                   <PatientDashboard />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/patient/profile"
-//               element={
-//                 <ProtectedRoute allowedRoles={["patient"]}>
-//                   <PatientProfile />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/patient/history"
-//               element={
-//                 <ProtectedRoute allowedRoles={["patient"]}>
-//                   <PatientTestHistory />
-//                 </ProtectedRoute>
-//               }
-//             />
-
-//             {/* Admin Routes */}
-//             {/* <Route
-//               path="/admin"
-//               element={
-//                 <ProtectedRoute allowedRoles={["admin"]}>
-//                   <AdminDashboard />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/admin/users"
-//               element={
-//                 <ProtectedRoute allowedRoles={["admin"]}>
-//                   <UserManagement />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/admin/tests"
-//               element={
-//                 <ProtectedRoute allowedRoles={["admin"]}>
-//                   <TestManagement />
-//                 </ProtectedRoute>
-//               }
-//             />
-//             <Route
-//               path="/admin/activity-logs"
-//               element={
-//                 <ProtectedRoute allowedRoles={["admin"]}>
-//                   <ActivityLogs />
-//                 </ProtectedRoute>
-//               }
-//             />{" "} */}
-
-//             {/* Reports */}
-//             {/* <Route path="/print-report" element={<PrintReport />} /> */}
-//             {/* Fallback */}
-//             {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
-//           </Routes>
-//         </div>
-//       </Router>
-//     </AuthProvider>
-//   );
-// }
-
-// export default App;

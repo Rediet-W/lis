@@ -22,19 +22,6 @@ const Dashboard = () => {
     <div className="flex h-screen bg-gray-50">
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {/* Header */}
-        {/* <header className="bg-white shadow-sm border-b px-6 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-[#235F72]">Admin Panel</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Welcome, Admin!</span>
-              <button className="bg-[#235F72] text-white px-4 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200">
-                Logout
-              </button>
-            </div>
-          </div>
-        </header> */}
-
         {/* Dashboard Content */}
         <main className="p-6">
           {activeTab === "dashboard" && (

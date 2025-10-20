@@ -1,8 +1,8 @@
 import React from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useSelector } from "react-redux";
 
 const Header = ({ title, onToggleSidebar }) => {
-  const { user } = useAuth();
+  const { user } = useSelector((state) => state.auth);
 
   const getRoleDisplayName = (role) => {
     const roleNames = {
@@ -27,7 +27,7 @@ const Header = ({ title, onToggleSidebar }) => {
           <h1 className="text-2xl font-bold text-[#235F72]">{title}</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <span className="text-gray-600">Welcome, {user?.name}!</span>
+          <span className="text-gray-600">Welcome, {user?.full_name}!</span>
           <span className="bg-[#36F1A2] text-[#235F72] px-3 py-1 rounded-full text-sm font-medium">
             {getRoleDisplayName(user?.role)}
           </span>
