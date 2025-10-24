@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { register, clearError } from "../../store/slices/authSlice";
-
+import { Eye, EyeOff } from "lucide-react";
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -14,10 +14,12 @@ const RegisterPage = () => {
     phone: "",
     role: "patient",
   });
-  const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false); // add
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // add
 
   const {
     loading,
@@ -152,11 +154,18 @@ const RegisterPage = () => {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-[#235F72] rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="w-10 h-10 bg-[#36F1A2] rounded-full"></div>
+          <div className="flex items-center">
+            <img
+              src="/logo.png"
+              alt="World Laboratory Service Logo"
+              className="w-16 h-16 mr-3 rounded-full bg-white object-contain"
+            />
+            <span className="font-bold text-xl">World Laboratory Center</span>
           </div>
-          <h1 className="text-3xl font-bold text-[#085DB6]">Create Account</h1>
-          <p className="text-gray-600 mt-2">Join FineCare Laboratory System</p>
+          <h1 className="text-2xl font-bold text-[#085DB6]">Create Account</h1>
+          <p className="text-gray-600 mt-2">
+            Join world laboratory center Laboratory System
+          </p>
         </div>
 
         {/* Registration Form */}
@@ -246,16 +255,26 @@ const RegisterPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password *
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent outline-none transition duration-200 ${
-                errors.password ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Create a password (min. 6 characters)"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent outline-none transition duration-200 ${
+                  errors.password ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Create a password (min. 6 characters)"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-red-500 text-xs mt-1">{errors.password}</p>
             )}
@@ -266,16 +285,30 @@ const RegisterPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Confirm Password *
             </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent outline-none transition duration-200 ${
-                errors.confirmPassword ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Confirm your password"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent outline-none transition duration-200 ${
+                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Confirm your password"
+              />
+              <button
+                type="button"
+                aria-label={
+                  showConfirmPassword
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {errors.confirmPassword && (
               <p className="text-red-500 text-xs mt-1">
                 {errors.confirmPassword}

@@ -7,7 +7,7 @@ export const fetchVisits = createAsyncThunk(
     try {
       const { auth } = getState();
       const response = await visitService.getAllVisits(filters, auth.token);
-      return response.data;
+      return response.data?.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch visits"

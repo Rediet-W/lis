@@ -1,244 +1,256 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import {
+  getUsers,
+  createUser as createUserThunk,
+  updateUserThunk,
+  toggleUserStatusThunk,
+} from "../../store/slices/userSlice";
 
 const UserManagement = () => {
+  const dispatch = useDispatch();
+  const { users, loading, error } = useSelector((state) => state.users);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
-  // Initial users data
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Admin User",
-      role: "Administrator",
-      email: "admin@clinic.com",
-      username: "admin",
-      phone: "+251 91 111 1111",
-      status: "active",
-      lastLogin: "Today, 10:30 AM",
-      department: "Administration",
-      createdDate: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "Recep 01",
-      role: "Receptionist",
-      email: "rec@clinic.com",
-      username: "receptionist1",
-      phone: "+251 92 222 2222",
-      status: "active",
-      lastLogin: "Today, 09:15 AM",
-      department: "Reception",
-      createdDate: "2024-02-20",
-    },
-    {
-      id: 3,
-      name: "Lab Tech 01",
-      role: "Laboratorist",
-      email: "lab@clinic.com",
-      username: "labtech1",
-      phone: "+251 93 333 3333",
-      status: "active",
-      lastLogin: "Today, 08:45 AM",
-      department: "Laboratory",
-      createdDate: "2024-03-10",
-    },
-    {
-      id: 4,
-      name: "Recep 02",
-      role: "Receptionist",
-      email: "rec2@clinic.com",
-      username: "receptionist2",
-      phone: "+251 94 444 4444",
-      status: "inactive",
-      lastLogin: "Yesterday, 16:20 PM",
-      department: "Reception",
-      createdDate: "2024-04-05",
-    },
-  ]);
-
   const [newUser, setNewUser] = useState({
-    name: "",
+    full_name: "",
     role: "",
     email: "",
     username: "",
     phone: "",
-    department: "",
-    status: "active",
     password: "",
     confirmPassword: "",
   });
 
+  useEffect(() => {
+    dispatch(getUsers());
+  }, [dispatch]);
+
   const roles = [
     {
-      value: "Administrator",
+      value: "admin",
       label: "Administrator",
       description: "Full system access",
     },
     {
-      value: "Receptionist",
+      value: "receptionist",
       label: "Receptionist",
       description: "Patient registration and test orders",
     },
     {
-      value: "Laboratorist",
+      value: "laboratorist",
       label: "Laboratorist",
       description: "Test processing and results entry",
     },
   ];
 
-  const departments = [
-    "Administration",
-    "Reception",
-    "Laboratory",
-    "Billing",
-    "Quality Control",
-  ];
-
   const filteredUsers = users.filter((user) => {
+    const q = searchTerm.toLowerCase();
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.full_name || "").toLowerCase().includes(q) ||
+      (user.email || "").toLowerCase().includes(q) ||
+      (user.username || "").toLowerCase().includes(q) ||
+      (user.phone || "").toLowerCase().includes(q);
     const matchesRole =
       roleFilter === "all" ||
-      user.role.toLowerCase() === roleFilter.toLowerCase();
+      (user.role || "").toLowerCase() === roleFilter.toLowerCase();
     return matchesSearch && matchesRole;
   });
 
-  const handleAddUser = () => {
+  // Convert role for display
+  const roleToDisplay = (role) => {
+    const roleMap = {
+      admin: "Administrator",
+      receptionist: "Receptionist",
+      laboratorist: "Laboratorist",
+    };
+    return roleMap[role] || role;
+  };
+
+  const handleAddUser = async () => {
     // Validation
     if (
-      !newUser.name ||
+      !newUser.full_name ||
       !newUser.role ||
       !newUser.email ||
       !newUser.username ||
       !newUser.password
     ) {
-      alert("Please fill in all required fields");
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (newUser.password !== newUser.confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
-    if (users.find((user) => user.email === newUser.email)) {
-      alert("A user with this email already exists");
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
-    if (users.find((user) => user.username === newUser.username)) {
-      alert("A user with this username already exists");
+    // Password strength validation
+    if (newUser.password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
       return;
     }
 
-    const userToAdd = {
-      ...newUser,
-      id: users.length + 1,
-      lastLogin: "Never",
-      createdDate: new Date().toISOString().split("T")[0],
+    const payload = {
+      full_name: newUser.full_name.trim(),
+      username: newUser.username.trim(),
+      email: newUser.email.trim().toLowerCase(),
+      phone: newUser.phone?.trim() || "",
+      role: newUser.role,
+      password: newUser.password,
+      // Backend automatically sets is_active to 1 for new users
     };
 
-    // Remove password fields before storing
-    const { password, confirmPassword, ...userWithoutPassword } = userToAdd;
+    try {
+      await dispatch(createUserThunk(payload)).unwrap();
+      setShowAddModal(false);
+      setNewUser({
+        full_name: "",
+        role: "",
+        email: "",
+        username: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+      });
+    } catch (e) {
+      // Extract a readable message and show it in a toast
+      console.error("Failed to create user:", e);
 
-    setUsers([...users, userWithoutPassword]);
-    setNewUser({
-      name: "",
-      role: "",
-      email: "",
-      username: "",
-      phone: "",
-      department: "",
-      status: "active",
-      password: "",
-      confirmPassword: "",
-    });
-    setShowAddModal(false);
+      const formatErrorMessage = (err) => {
+        if (err === null || err === undefined)
+          return "An unknown error occurred";
+        if (typeof err === "string") return err;
+        if (Array.isArray(err)) return err.join(", ");
+        if (err instanceof Error && err.message) return err.message;
+        if (typeof err === "object") {
+          // If backend returns an object like { phone: ["Invalid phone number format"] }
+          const parts = [];
+          Object.values(err).forEach((v) => {
+            if (typeof v === "string") parts.push(v);
+            else if (Array.isArray(v)) parts.push(v.join(", "));
+            else if (typeof v === "object" && v !== null)
+              parts.push(JSON.stringify(v));
+          });
+          if (parts.length) return parts.join(". ");
+          return JSON.stringify(err);
+        }
+        return String(err);
+      };
+
+      const message = formatErrorMessage(e);
+      toast.error(message);
+    }
   };
 
   const handleEditUser = (user) => {
-    setEditingUser({ ...user });
+    setEditingUser({
+      ...user,
+      // Use the actual backend role value
+      role: user.role,
+    });
   };
 
-  const handleUpdateUser = () => {
+  const handleUpdateUser = async () => {
     if (
-      !editingUser.name ||
+      !editingUser.full_name ||
       !editingUser.role ||
       !editingUser.email ||
       !editingUser.username
     ) {
-      alert("Please fill in all required fields");
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    // Check for duplicate email (excluding current user)
-    const duplicateEmail = users.find(
-      (user) => user.email === editingUser.email && user.id !== editingUser.id
-    );
-    if (duplicateEmail) {
-      alert("A user with this email already exists");
-      return;
-    }
+    const payload = {
+      full_name: editingUser.full_name,
+      username: editingUser.username,
+      email: editingUser.email,
+      phone: editingUser.phone || "",
+      role: editingUser.role,
+      is_active: editingUser.is_active ? 1 : 0,
+    };
 
-    // Check for duplicate username (excluding current user)
-    const duplicateUsername = users.find(
-      (user) =>
-        user.username === editingUser.username && user.id !== editingUser.id
-    );
-    if (duplicateUsername) {
-      alert("A user with this username already exists");
-      return;
+    try {
+      await dispatch(
+        updateUserThunk({ id: editingUser.id, data: payload })
+      ).unwrap();
+      setEditingUser(null);
+      dispatch(getUsers());
+    } catch (e) {
+      // Error is already handled in the thunk with toast
+      console.error("Failed to update user:", e);
     }
-
-    setUsers(
-      users.map((user) => (user.id === editingUser.id ? editingUser : user))
-    );
-    setEditingUser(null);
   };
 
-  const handleDeleteUser = (userId) => {
-    setUsers(users.filter((user) => user.id !== userId));
-    setShowDeleteConfirm(null);
+  const handleDeactivateUser = async (userId) => {
+    try {
+      await dispatch(
+        toggleUserStatusThunk({ id: userId, makeActive: false })
+      ).unwrap();
+      setShowDeleteConfirm(null);
+    } catch (e) {
+      // Error is already handled in the thunk with toast
+      console.error("Failed to deactivate user:", e);
+    }
   };
 
-  const handleStatusToggle = (userId) => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              status: user.status === "active" ? "inactive" : "active",
-            }
-          : user
-      )
-    );
+  const handleStatusToggle = async (userId) => {
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+    const makeActive = !user.is_active;
+    try {
+      await dispatch(
+        toggleUserStatusThunk({ id: userId, makeActive })
+      ).unwrap();
+    } catch (e) {
+      // Error is already handled in the thunk with toast
+      console.error("Failed to update status:", e);
+    }
   };
 
   const generateUsername = (name) => {
-    const baseUsername = name.toLowerCase().replace(/\s+/g, "");
-    let username = baseUsername;
+    const base = (name || "").toLowerCase().replace(/\s+/g, "");
+    let username = base;
     let counter = 1;
-
-    while (users.find((user) => user.username === username)) {
-      username = `${baseUsername}${counter}`;
-      counter++;
+    while (users.find((u) => u.username === username)) {
+      username = `${base}${counter++}`;
     }
-
     return username;
   };
 
   const handleNameChange = (name) => {
     const username = generateUsername(name);
-    setNewUser((prev) => ({
-      ...prev,
-      name,
-      username,
-    }));
+    setNewUser((prev) => ({ ...prev, full_name: name, username }));
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  // Format phone for display
+  const formatPhone = (phone) => {
+    if (!phone) return "N/A";
+    return phone;
   };
 
   return (
@@ -268,7 +280,7 @@ const UserManagement = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search users by name, email, or username..."
+                placeholder="Search users by name, email, username, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
@@ -285,7 +297,7 @@ const UserManagement = () => {
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
           >
             <option value="all">All Roles</option>
-            <option value="administrator">Administrator</option>
+            <option value="admin">Administrator</option>
             <option value="receptionist">Receptionist</option>
             <option value="laboratorist">Laboratorist</option>
           </select>
@@ -299,22 +311,19 @@ const UserManagement = () => {
             <thead>
               <tr className="border-b-2 border-gray-200 bg-gray-50">
                 <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
-                  User
+                  User Information
                 </th>
                 <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
                   Role
                 </th>
                 <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
-                  Contact
-                </th>
-                <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
-                  Department
+                  Contact Info
                 </th>
                 <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
                   Status
                 </th>
                 <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
-                  Last Login
+                  Created Date
                 </th>
                 <th className="text-left py-4 px-6 text-[#235F72] font-semibold">
                   Actions
@@ -329,50 +338,47 @@ const UserManagement = () => {
                 >
                   <td className="py-4 px-6">
                     <div className="font-medium text-[#235F72]">
-                      {user.name}
+                      {user.full_name}
                     </div>
                     <div className="text-sm text-gray-500">
                       @{user.username}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      Created: {user.createdDate}
-                    </div>
+                    <div className="text-xs text-gray-400">ID: {user.id}</div>
                   </td>
                   <td className="py-4 px-6">
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        user.role === "Administrator"
+                        user.role === "admin"
                           ? "bg-purple-100 text-purple-800 border border-purple-200"
-                          : user.role === "Receptionist"
+                          : user.role === "receptionist"
                           ? "bg-blue-100 text-blue-800 border border-blue-200"
                           : "bg-green-100 text-green-800 border border-green-200"
                       }`}
                     >
-                      {user.role}
+                      {roleToDisplay(user.role)}
                     </span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="text-gray-600">{user.email}</div>
-                    <div className="text-sm text-gray-500">{user.phone}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-gray-600">{user.department}</div>
+                    <div className="text-sm text-gray-500">
+                      {formatPhone(user.phone)}
+                    </div>
                   </td>
                   <td className="py-4 px-6">
                     <button
                       onClick={() => handleStatusToggle(user.id)}
                       className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition duration-200 ${
-                        user.status === "active"
+                        user.is_active
                           ? "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
                           : "bg-red-100 text-red-800 border border-red-200 hover:bg-red-200"
                       }`}
                     >
-                      {user.status === "active" ? "✅ Active" : "❌ Inactive"}
+                      {user.is_active ? "✅ Active" : "❌ Inactive"}
                     </button>
                   </td>
                   <td className="py-4 px-6">
                     <div className="text-sm text-gray-600">
-                      {user.lastLogin}
+                      {formatDate(user.created_at)}
                     </div>
                   </td>
                   <td className="py-4 px-6">
@@ -387,8 +393,9 @@ const UserManagement = () => {
                       <button
                         onClick={() => setShowDeleteConfirm(user.id)}
                         className="text-red-600 hover:text-red-800 font-medium text-sm"
+                        disabled={!user.is_active}
                       >
-                        Delete
+                        Deactivate
                       </button>
                     </div>
                   </td>
@@ -437,7 +444,7 @@ const UserManagement = () => {
                     </label>
                     <input
                       type="text"
-                      value={newUser.name}
+                      value={newUser.full_name}
                       onChange={(e) => handleNameChange(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                       placeholder="Enter full name"
@@ -493,55 +500,22 @@ const UserManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department
+                      Role *
                     </label>
                     <select
-                      value={newUser.department}
+                      value={newUser.role}
                       onChange={(e) =>
-                        setNewUser({ ...newUser, department: e.target.value })
+                        setNewUser({ ...newUser, role: e.target.value })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     >
-                      <option value="">Select Department</option>
-                      {departments.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
+                      <option value="">Select Role</option>
+                      {roles.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
                         </option>
                       ))}
                     </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role *
-                  </label>
-                  <div className="space-y-2">
-                    {roles.map((role) => (
-                      <label
-                        key={role.value}
-                        className="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                      >
-                        <input
-                          type="radio"
-                          name="role"
-                          value={role.value}
-                          checked={newUser.role === role.value}
-                          onChange={(e) =>
-                            setNewUser({ ...newUser, role: e.target.value })
-                          }
-                          className="mt-1 text-[#36F1A2] focus:ring-[#36F1A2]"
-                        />
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">
-                            {role.label}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {role.description}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
                   </div>
                 </div>
 
@@ -578,25 +552,6 @@ const UserManagement = () => {
                       placeholder="Confirm password"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={newUser.status === "active"}
-                      onChange={(e) =>
-                        setNewUser({
-                          ...newUser,
-                          status: e.target.checked ? "active" : "inactive",
-                        })
-                      }
-                      className="mr-2 text-[#36F1A2] focus:ring-[#36F1A2]"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Activate user account immediately
-                    </span>
-                  </label>
                 </div>
               </div>
 
@@ -642,9 +597,12 @@ const UserManagement = () => {
                     </label>
                     <input
                       type="text"
-                      value={editingUser.name}
+                      value={editingUser.full_name}
                       onChange={(e) =>
-                        setEditingUser({ ...editingUser, name: e.target.value })
+                        setEditingUser({
+                          ...editingUser,
+                          full_name: e.target.value,
+                        })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     />
@@ -689,7 +647,7 @@ const UserManagement = () => {
                     </label>
                     <input
                       type="tel"
-                      value={editingUser.phone}
+                      value={editingUser.phone || ""}
                       onChange={(e) =>
                         setEditingUser({
                           ...editingUser,
@@ -702,22 +660,19 @@ const UserManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Department
+                      Role *
                     </label>
                     <select
-                      value={editingUser.department}
+                      value={editingUser.role}
                       onChange={(e) =>
-                        setEditingUser({
-                          ...editingUser,
-                          department: e.target.value,
-                        })
+                        setEditingUser({ ...editingUser, role: e.target.value })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     >
-                      <option value="">Select Department</option>
-                      {departments.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
+                      <option value="">Select Role</option>
+                      {roles.map((role) => (
+                        <option key={role.value} value={role.value}>
+                          {role.label}
                         </option>
                       ))}
                     </select>
@@ -725,23 +680,22 @@ const UserManagement = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role *
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={editingUser.is_active}
+                      onChange={(e) =>
+                        setEditingUser({
+                          ...editingUser,
+                          is_active: e.target.checked,
+                        })
+                      }
+                      className="mr-2 text-[#36F1A2] focus:ring-[#36F1A2]"
+                    />
+                    <span className="text-sm text-gray-700">
+                      User account is active
+                    </span>
                   </label>
-                  <select
-                    value={editingUser.role}
-                    onChange={(e) =>
-                      setEditingUser({ ...editingUser, role: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
-                  >
-                    <option value="">Select Role</option>
-                    {roles.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
 
@@ -764,16 +718,16 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Deactivate Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-[#235F72] mb-4">
-              Confirm Delete
+              Confirm Deactivate
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this user? This action cannot be
-              undone.
+              Are you sure you want to deactivate this user? They will no longer
+              be able to access the system.
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -783,10 +737,10 @@ const UserManagement = () => {
                 Cancel
               </button>
               <button
-                onClick={() => handleDeleteUser(showDeleteConfirm)}
+                onClick={() => handleDeactivateUser(showDeleteConfirm)}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
               >
-                Delete User
+                Deactivate User
               </button>
             </div>
           </div>

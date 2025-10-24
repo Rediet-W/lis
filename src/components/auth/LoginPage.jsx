@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { login, clearError, getProfile } from "../../store/slices/authSlice";
-
+import { Eye, EyeOff } from "lucide-react";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     loading,
@@ -61,32 +62,53 @@ const LoginPage = () => {
     }
   }, [reduxError, dispatch]);
 
+  // ...existing code...
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent default form submission
-    console.log("Login attempt:", { email, password });
+    e.preventDefault();
     setIsSubmitting(true);
 
-    // Basic validation
     if (!email || !password) {
-      toast.error("Please enter both email and password", {
-        position: "top-right",
-        autoClose: 5000,
-      });
+      toast.error("Please enter both email and password", { autoClose: 5000 });
       setIsSubmitting(false);
       return;
     }
 
     try {
-      console.log("Dispatching login action...");
       const result = await dispatch(login({ email, password })).unwrap();
+
+      // Show success toast immediately (token present)
+      const displayName = result?.user?.full_name || email;
+      toast.success(`Welcome back, ${displayName}!`, { autoClose: 2000 });
+
+      // Ensure profile is loaded (if user not returned by login)
       if (result?.token && !result?.user) {
-        await dispatch(getProfile());
+        await dispatch(getProfile()).unwrap();
       }
-      console.log("Login successful:", result);
-    } catch (error) {
-      console.log("Login failed:", error);
+
+      // Navigate shortly after toast is queued
+      setTimeout(() => {
+        const role = result?.user?.role || "dashboard";
+        switch (role) {
+          case "admin":
+            navigate("/admin/dashboard");
+            break;
+          case "receptionist":
+            navigate("/receptionist/dashboard");
+            break;
+          case "laboratorist":
+            navigate("/laboratory/dashboard");
+            break;
+          case "patient":
+            navigate("/patient/dashboard");
+            break;
+          default:
+            navigate("/dashboard");
+        }
+      }, 200);
+
       setIsSubmitting(false);
-      // Error is handled by the Redux error state and useEffect
+    } catch (err) {
+      setIsSubmitting(false);
     }
   };
 
@@ -97,11 +119,14 @@ const LoginPage = () => {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-[#235F72] rounded-full flex items-center justify-center mx-auto mb-4">
-            <div className="w-10 h-10 bg-[#36F1A2] rounded-full"></div>
+          <div className="flex items-center flex-col">
+            <img
+              src="/logo.png"
+              alt="World Laboratory Service Logo"
+              className="w-16 h-16 mr-3 rounded-full bg-white object-contain"
+            />
+            <span className="font-bold text-xl">World Laboratory Center</span>
           </div>
-          <h1 className="text-3xl font-bold text-[#085DB6]">FineCare</h1>
-          <p className="text-gray-600 mt-2">Laboratory Information System</p>
         </div>
 
         {/* Login Form */}
@@ -124,14 +149,23 @@ const LoginPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent outline-none transition duration-200"
-              placeholder="Enter your password"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent outline-none transition duration-200"
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-[#235F72]"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <button

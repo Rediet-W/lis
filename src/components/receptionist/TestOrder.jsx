@@ -1,72 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { createTestOrder } from "../../store/slices/testOrderSlice";
 import { fetchTests, fetchTestCategories } from "../../store/slices/testSlice";
 import { fetchQuestionsByTest } from "../../store/slices/dynamicQuestionSlice";
 import { createVisit } from "../../store/slices/visitSlice";
-import { createTestOrder } from "../../store/slices/testOrderSlice";
 
-const TestOrders = () => {
+const TestOrder = ({ patient, onOrderComplete, onBack }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Get patient passed from PatientSearch
-  const incoming = location.state?.patient || null;
-  const patient = incoming?.id
-    ? incoming
-    : incoming?.data
-    ? incoming.data
-    : null;
-
   const {
     tests,
     testCategories,
     loading: testsLoading,
-  } = useSelector((s) => s.tests);
-  const { loading: orderLoading } = useSelector((s) => s.testOrders);
-  const { questionsByTest } = useSelector((s) => s.dynamicQuestions);
-  const { user } = useSelector((s) => s.auth || {});
+  } = useSelector((state) => state.tests);
+  const { loading: orderLoading } = useSelector((state) => state.testOrders);
+  const { questionsByTest, loading: questionsLoading } = useSelector(
+    (state) => state.dynamicQuestions
+  );
+  const { user } = useSelector((state) => state.auth || {});
+
+  const currentPatient = patient?.id ? patient : patient?.data ?? patient;
 
   const [selectedTests, setSelectedTests] = useState([]);
   const [dynamicAnswers, setDynamicAnswers] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [loadingQuestionsForTest, setLoadingQuestionsForTest] = useState(null);
 
+  // Fetch tests on component mount
   useEffect(() => {
     dispatch(fetchTests());
     dispatch(fetchTestCategories());
   }, [dispatch]);
-
-  // If no patient, guide user back
-  if (!patient) {
-    return (
-      <div className="max-w-3xl mx-auto p-6">
-        <div className="bg-white rounded-xl shadow p-6 text-center">
-          <h2 className="text-lg font-semibold text-[#235F72] mb-2">
-            No patient selected
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Please select a patient from the Patient Search page.
-          </p>
-          <button
-            onClick={() => navigate("/receptionist/patient-search")}
-            className="px-6 py-3 bg-[#235F72] text-white rounded-lg hover:bg-[#1a4a5a]"
-          >
-            Go to Patient Search
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const categoryChips = [
     { id: "all", name: "All Tests" },
     ...((testCategories || []).map((c) => ({ id: c.id, name: c.name })) || []),
   ];
-
+  // Filter tests based on search and category
   const filteredTests = tests.filter((test) => {
     const matchesSearch =
       test.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,24 +46,30 @@ const TestOrders = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const getTestQuestions = (testId) => questionsByTest[testId] || [];
+  // Get questions for a specific test
+  const getTestQuestions = (testId) => {
+    return questionsByTest[testId] || [];
+  };
 
   const handleTestToggle = async (test) => {
     if (selectedTests.find((t) => t.id === test.id)) {
-      setSelectedTests((prev) => prev.filter((t) => t.id !== test.id));
-      setDynamicAnswers((prev) => {
-        const next = { ...prev };
-        delete next[test.id];
-        return next;
-      });
+      // Deselect test
+      setSelectedTests(selectedTests.filter((t) => t.id !== test.id));
+      // Remove dynamic answers for this test
+      const newAnswers = { ...dynamicAnswers };
+      delete newAnswers[test.id];
+      setDynamicAnswers(newAnswers);
     } else {
-      setSelectedTests((prev) => [...prev, test]);
+      // Select test
+      setSelectedTests([...selectedTests, test]);
+
+      // Fetch dynamic questions for this test if not already loaded
       if (!questionsByTest[test.id]) {
         setLoadingQuestionsForTest(test.id);
         try {
           await dispatch(fetchQuestionsByTest(test.id)).unwrap();
-        } catch (e) {
-          console.error("Failed to fetch questions for test:", test.id, e);
+        } catch (error) {
+          console.error("Failed to fetch questions for test:", test.id, error);
           toast.error(`Failed to load questions for ${test.name}`);
         } finally {
           setLoadingQuestionsForTest(null);
@@ -105,12 +81,20 @@ const TestOrders = () => {
   const handleDynamicAnswer = (testId, questionId, value) => {
     setDynamicAnswers((prev) => ({
       ...prev,
-      [testId]: { ...(prev[testId] || {}), [questionId]: value },
+      [testId]: {
+        ...prev[testId],
+        [questionId]: value,
+      },
     }));
+  };
+
+  const calculateTotal = () => {
+    return selectedTests.reduce((total, test) => total + (test.price || 0), 0);
   };
 
   const renderDynamicQuestion = (testId, question) => {
     const currentAnswer = dynamicAnswers[testId]?.[question.id];
+
     switch (question.field_type) {
       case "radio":
         return (
@@ -138,6 +122,7 @@ const TestOrders = () => {
             </div>
           </div>
         );
+
       case "checkbox":
         return (
           <div key={question.id} className="mb-3">
@@ -151,11 +136,11 @@ const TestOrders = () => {
                     type="checkbox"
                     checked={currentAnswer?.includes?.(option) || false}
                     onChange={(e) => {
-                      const curr = currentAnswer || [];
-                      const next = e.target.checked
-                        ? [...curr, option]
-                        : curr.filter((v) => v !== option);
-                      handleDynamicAnswer(testId, question.id, next);
+                      const currentValues = currentAnswer || [];
+                      const newValues = e.target.checked
+                        ? [...currentValues, option]
+                        : currentValues.filter((v) => v !== option);
+                      handleDynamicAnswer(testId, question.id, newValues);
                     }}
                     className="mr-1 text-[#36F1A2] focus:ring-[#36F1A2]"
                   />
@@ -165,6 +150,7 @@ const TestOrders = () => {
             </div>
           </div>
         );
+
       case "text":
         return (
           <div key={question.id} className="mb-3">
@@ -182,6 +168,7 @@ const TestOrders = () => {
             />
           </div>
         );
+
       case "dropdown":
         return (
           <div key={question.id} className="mb-3">
@@ -205,28 +192,36 @@ const TestOrders = () => {
             </select>
           </div>
         );
+
       default:
         return null;
     }
   };
 
+  // Check if all required dynamic questions are answered for a test
   const isTestReadyForSubmission = (test) => {
     const testQuestions = getTestQuestions(test.id);
-    if (!testQuestions || testQuestions.length === 0) return true;
-    const answers = dynamicAnswers[test.id] || {};
-    return testQuestions.every((q) => {
-      if (!q.is_required) return true;
-      const a = answers[q.id];
-      if (q.field_type === "checkbox") return Array.isArray(a) && a.length > 0;
-      return a && a.toString().trim() !== "";
+    if (!testQuestions || testQuestions.length === 0) {
+      return true;
+    }
+
+    const testAnswers = dynamicAnswers[test.id] || {};
+
+    return testQuestions.every((question) => {
+      if (!question.is_required) return true;
+
+      const answer = testAnswers[question.id];
+      if (question.field_type === "checkbox") {
+        return answer && answer.length > 0;
+      }
+      return answer && answer.toString().trim() !== "";
     });
   };
 
-  const areAllTestsReady = () =>
-    selectedTests.every((test) => isTestReadyForSubmission(test));
-
-  const calculateTotal = () =>
-    selectedTests.reduce((sum, t) => sum + (t.price || 0), 0);
+  // Check if all selected tests are ready for submission
+  const areAllTestsReady = () => {
+    return selectedTests.every((test) => isTestReadyForSubmission(test));
+  };
 
   const handleSubmitOrder = async () => {
     if (selectedTests.length === 0) {
@@ -239,33 +234,35 @@ const TestOrders = () => {
     }
 
     try {
+      // 1) Create a visit first (backend will give us visit.id)
       const now = new Date();
       const visitPayload = {
-        patient_id: patient.id,
+        patient_id: currentPatient.id,
         receptionist_id: user?.id || null,
         visit_date: now.toISOString().split("T")[0],
-        visit_time: now.toTimeString().slice(0, 5),
+        visit_time: now.toTimeString().slice(0, 5), // HH:MM
         status: "registered",
         priority: "routine",
       };
       const visit = await dispatch(createVisit(visitPayload)).unwrap();
-      const visitId = visit?.id ?? visit?.data?.id;
 
+      // 2) Create test orders using visit_id
       const orderPromises = selectedTests.map((test) =>
         dispatch(
           createTestOrder({
-            visit_id: visitId,
+            visit_id: visit.data.id,
             test_id: test.id,
             priority: "normal",
-            sample_type: test.sample_type || "blood",
+            sample_type: test.sample_type || "serum",
             dynamic_answers: dynamicAnswers[test.id] || {},
           })
         ).unwrap()
       );
+
       await Promise.all(orderPromises);
 
       toast.success("Visit and test orders created successfully!");
-      navigate("/receptionist/dashboard");
+      if (onOrderComplete) onOrderComplete();
     } catch (error) {
       console.error("Failed to create visit/test orders:", error);
       toast.error(
@@ -303,7 +300,7 @@ const TestOrders = () => {
         </div>
 
         <div className="p-6">
-          {/* Progress */}
+          {/* Progress Steps */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-600">
@@ -320,12 +317,13 @@ const TestOrders = () => {
             </div>
           </div>
 
-          {/* Search and Categories */}
+          {/* Test Selection Panel */}
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-[#235F72] border-b pb-2">
               Select Laboratory Tests
             </h3>
 
+            {/* Search and Filter */}
             <div className="space-y-3">
               <div className="relative">
                 <input
@@ -380,7 +378,8 @@ const TestOrders = () => {
                     (t) => t.id === test.id
                   );
                   const testQuestions = getTestQuestions(test.id);
-                  const hasDynamicQuestions = testQuestions.length > 0;
+                  const hasDynamicQuestions =
+                    testQuestions && testQuestions.length > 0;
                   const isReady = isTestReadyForSubmission(test);
                   const isLoadingQuestions =
                     loadingQuestionsForTest === test.id;
@@ -466,6 +465,7 @@ const TestOrders = () => {
                               </div>
                             </div>
 
+                            {/* Dynamic Questions */}
                             {isSelected && hasDynamicQuestions && (
                               <div className="mt-3 p-3 bg-white border border-[#36F1A2] rounded-lg">
                                 <div className="flex items-center justify-between mb-2">
@@ -479,15 +479,24 @@ const TestOrders = () => {
                                   )}
                                 </div>
                                 <div className="space-y-3">
-                                  {testQuestions.map((q) => (
-                                    <div key={q.id}>
-                                      {renderDynamicQuestion(test.id, q)}
+                                  {testQuestions.map((question) => (
+                                    <div key={question.id}>
+                                      {renderDynamicQuestion(test.id, question)}
+                                      {question.is_required &&
+                                        !dynamicAnswers[test.id]?.[
+                                          question.id
+                                        ] && (
+                                          <p className="text-xs text-red-500 mt-1">
+                                            This field is required
+                                          </p>
+                                        )}
                                     </div>
                                   ))}
                                 </div>
                               </div>
                             )}
 
+                            {/* Loading state for questions */}
                             {isSelected && isLoadingQuestions && (
                               <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                                 <div className="text-center text-gray-600 text-sm">
@@ -505,7 +514,7 @@ const TestOrders = () => {
             </div>
           </div>
 
-          {/* Summary */}
+          {/* Selected Tests Summary */}
           {selectedTests.length > 0 && (
             <div className="border-t pt-6 mt-6">
               <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
@@ -522,8 +531,11 @@ const TestOrders = () => {
 
                 <div className="space-y-2 mb-4">
                   {selectedTests.map((test) => {
-                    const hasQuestions = getTestQuestions(test.id).length > 0;
-                    const ready = isTestReadyForSubmission(test);
+                    const testQuestions = getTestQuestions(test.id);
+                    const isReady = isTestReadyForSubmission(test);
+                    const hasQuestions =
+                      testQuestions && testQuestions.length > 0;
+
                     return (
                       <div
                         key={test.id}
@@ -537,12 +549,12 @@ const TestOrders = () => {
                             {hasQuestions && (
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
-                                  ready
+                                  isReady
                                     ? "bg-green-100 text-green-800"
                                     : "bg-yellow-100 text-yellow-800"
                                 }`}
                               >
-                                {ready ? "✓ Ready" : "⚠️ Incomplete"}
+                                {isReady ? "✓ Ready" : "⚠️ Incomplete"}
                               </span>
                             )}
                           </div>
@@ -556,7 +568,10 @@ const TestOrders = () => {
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleTestToggle(test)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTestToggle(test);
+                            }}
                             className="text-red-500 hover:text-red-700 text-sm"
                           >
                             Remove
@@ -577,14 +592,14 @@ const TestOrders = () => {
             </div>
           )}
 
-          {/* Actions */}
+          {/* Action Buttons */}
           <div className="flex justify-between space-x-4 pt-6 border-t mt-6">
             <button
               type="button"
-              onClick={() => navigate("/receptionist/patient-search")}
+              onClick={onBack}
               className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200 font-semibold"
             >
-              ← Back to Patient Search
+              ← Back to Patient Info
             </button>
             <div className="flex space-x-4">
               <button
@@ -611,4 +626,4 @@ const TestOrders = () => {
   );
 };
 
-export default TestOrders;
+export default TestOrder;

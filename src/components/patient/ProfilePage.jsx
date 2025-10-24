@@ -1,70 +1,156 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import {
+  fetchPatientById,
+  updatePatient,
+} from "../../store/slices/patientSlice";
 
 const ProfilePage = () => {
+  const dispatch = useDispatch();
+
+  const { currentPatient, loading, error } = useSelector(
+    (s) => s.patients || {}
+  );
+  console.log("currentPatient", currentPatient);
+  const { user } = useSelector((s) => s.auth || {});
+  const routeId = user.id;
+  // Determine the patient id (route > auth mapping)
+  const patientId = useMemo(() => {
+    if (routeId) return Number(routeId);
+    // if your auth stores the mapped patient id, prefer it
+    return user?.patient_id || user?.patientId || currentPatient?.id || null;
+  }, [routeId, user?.patient_id, user?.patientId, currentPatient?.id]);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    fullName: "Abel Teshome",
-    cardNumber: "CLN-001",
-    dateOfBirth: "1999-01-15",
-    age: 25,
-    gender: "male",
-    phone: "+251 91 234 5678",
-    address: "Bole, Addis Ababa, Ethiopia",
-    email: "abel.teshome@email.com",
-    emergencyContact: "+251 92 345 6789",
-    bloodType: "unknown",
-    knownAllergies: "",
-    chronicConditions: "",
-    currentMedications: "",
+  const [formData, setFormData] = useState({
+    // backend fields only
+    full_name: "",
+    card_number: "",
+    date_of_birth: "",
+    gender: "",
+    phone: "",
+    address: "",
+    emergency_contact: "",
+    email: "",
+    blood_type: "unknown",
+    known_allergies: "",
+    chronic_conditions: "",
+    current_medications: "",
   });
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Save logic would go here
+  // Fetch profile
+  useEffect(() => {
+    if (patientId) dispatch(fetchPatientById(patientId));
+  }, [dispatch, patientId]);
+
+  // Hydrate form from backend response
+  useEffect(() => {
+    if (!currentPatient) return;
+    setFormData({
+      full_name: currentPatient.full_name || "",
+      card_number: currentPatient.card_number || "",
+      date_of_birth: currentPatient.date_of_birth
+        ? new Date(currentPatient.date_of_birth).toISOString().slice(0, 10)
+        : "",
+      gender: currentPatient.gender || "",
+      phone: currentPatient.phone || "",
+      address: currentPatient.address || "",
+      emergency_contact: currentPatient.emergency_contact || "",
+      email: currentPatient.email || "",
+      blood_type: currentPatient.blood_type || "unknown",
+      known_allergies: currentPatient.known_allergies || "",
+      chronic_conditions: currentPatient.chronic_conditions || "",
+      current_medications: currentPatient.current_medications || "",
+    });
+  }, [currentPatient]);
+
+  const age = useMemo(() => {
+    const dob = formData.date_of_birth;
+    if (!dob) return null;
+    const birth = new Date(dob);
+    const today = new Date();
+    let a = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+    return a;
+  }, [formData.date_of_birth]);
+
+  const handleSave = async () => {
+    if (!patientId) return;
+    try {
+      await dispatch(
+        updatePatient({
+          id: patientId,
+          patientData: {
+            ...formData,
+            // keep nulls for optional fields if empty
+            email: formData.email || null,
+            emergency_contact: formData.emergency_contact || null,
+            known_allergies: formData.known_allergies || null,
+            chronic_conditions: formData.chronic_conditions || null,
+            current_medications: formData.current_medications || null,
+            date_of_birth: formData.date_of_birth || null,
+          },
+        })
+      ).unwrap();
+      setIsEditing(false);
+      // refresh
+      dispatch(fetchPatientById(patientId));
+    } catch (e) {
+      // handled by slice; keep UI state intact
+    }
   };
+
+  const onChange = (k, v) => setFormData((p) => ({ ...p, [k]: v }));
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        {/* <button className="flex items-center text-[#085DB6] hover:text-[#074a9b] mb-4">
-          <span className="mr-2">←</span>
-          Back to Dashboard
-        </button> */}
-        <div className="flex justify-end items-center">
-          {/* <h1 className="text-2xl font-bold text-[#235F72]">My Profile</h1> */}
-          <button
-            onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-            className="bg-[#235F72] text-white px-6 py-2 rounded-lg hover:bg-[#1a4a5a] transition duration-200"
-          >
-            {isEditing ? "Save Profile" : "Edit Profile"}
-          </button>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-[#235F72]">My Profile</h1>
+        <div className="flex gap-2">
+          {isEditing ? (
+            <>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-6 py-2 bg-[#235F72] text-white rounded-lg hover:bg-[#1a4a5a]"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Profile"}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-6 py-2 bg-[#235F72] text-white rounded-lg hover:bg-[#1a4a5a]"
+              disabled={loading || !currentPatient}
+            >
+              Edit Profile
+            </button>
+          )}
         </div>
       </div>
 
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          {String(error)}
+        </div>
+      )}
+
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-        {/* Personal Information Section */}
+        {/* Personal Information */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-[#235F72] mb-4">
             Personal Information
           </h2>
 
-          {/* Profile Photo */}
-          <div className="flex items-center mb-6">
-            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mr-4">
-              <span className="text-2xl text-gray-500">👤</span>
-            </div>
-            <div>
-              <button className="bg-[#36F1A2] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#2dd191] transition duration-200 font-medium">
-                Upload Photo
-              </button>
-              <p className="text-sm text-gray-500 mt-1">
-                or keep default avatar
-              </p>
-            </div>
-          </div>
-
-          {/* Personal Info Form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -72,10 +158,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="text"
-                value={profileData.fullName}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, fullName: e.target.value })
-                }
+                value={formData.full_name}
+                onChange={(e) => onChange("full_name", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -87,7 +171,7 @@ const ProfilePage = () => {
               </label>
               <input
                 type="text"
-                value={profileData.cardNumber}
+                value={formData.card_number}
                 disabled
                 className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500"
               />
@@ -99,28 +183,14 @@ const ProfilePage = () => {
               </label>
               <input
                 type="date"
-                value={profileData.dateOfBirth}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    dateOfBirth: e.target.value,
-                  })
-                }
+                value={formData.date_of_birth || ""}
+                onChange={(e) => onChange("date_of_birth", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Age
-              </label>
-              <input
-                type="text"
-                value={`${profileData.age} (Auto-calculated)`}
-                disabled
-                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-500"
-              />
+              <div className="text-xs text-gray-500 mt-1">
+                Age: {formData.date_of_birth ? `${age} years` : "N/A"}
+              </div>
             </div>
 
             <div>
@@ -128,13 +198,12 @@ const ProfilePage = () => {
                 Gender
               </label>
               <select
-                value={profileData.gender}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, gender: e.target.value })
-                }
+                value={formData.gender || ""}
+                onChange={(e) => onChange("gender", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               >
+                <option value="">Select</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
@@ -146,10 +215,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="tel"
-                value={profileData.phone}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, phone: e.target.value })
-                }
+                value={formData.phone}
+                onChange={(e) => onChange("phone", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -161,10 +228,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="text"
-                value={profileData.address}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, address: e.target.value })
-                }
+                value={formData.address}
+                onChange={(e) => onChange("address", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -176,10 +241,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="email"
-                value={profileData.email}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, email: e.target.value })
-                }
+                value={formData.email || ""}
+                onChange={(e) => onChange("email", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -191,13 +254,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="tel"
-                value={profileData.emergencyContact}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    emergencyContact: e.target.value,
-                  })
-                }
+                value={formData.emergency_contact || ""}
+                onChange={(e) => onChange("emergency_contact", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -205,10 +263,10 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Medical Information Section */}
+        {/* Medical Information */}
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-[#235F72] mb-4">
-            Medical Information (Optional)
+            Medical Information
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -216,22 +274,26 @@ const ProfilePage = () => {
                 Blood Type
               </label>
               <select
-                value={profileData.bloodType}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, bloodType: e.target.value })
-                }
+                value={formData.blood_type || "unknown"}
+                onChange={(e) => onChange("blood_type", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <option value="unknown">Not Specified</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
+                {[
+                  "unknown",
+                  "A+",
+                  "A-",
+                  "B+",
+                  "B-",
+                  "AB+",
+                  "AB-",
+                  "O+",
+                  "O-",
+                ].map((bt) => (
+                  <option key={bt} value={bt}>
+                    {bt === "unknown" ? "Not Specified" : bt}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -241,13 +303,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="text"
-                value={profileData.knownAllergies}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    knownAllergies: e.target.value,
-                  })
-                }
+                value={formData.known_allergies || ""}
+                onChange={(e) => onChange("known_allergies", e.target.value)}
                 disabled={!isEditing}
                 placeholder="List any known allergies"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
@@ -260,13 +317,8 @@ const ProfilePage = () => {
               </label>
               <input
                 type="text"
-                value={profileData.chronicConditions}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    chronicConditions: e.target.value,
-                  })
-                }
+                value={formData.chronic_conditions || ""}
+                onChange={(e) => onChange("chronic_conditions", e.target.value)}
                 disabled={!isEditing}
                 placeholder="List any chronic medical conditions"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
@@ -279,12 +331,9 @@ const ProfilePage = () => {
               </label>
               <input
                 type="text"
-                value={profileData.currentMedications}
+                value={formData.current_medications || ""}
                 onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    currentMedications: e.target.value,
-                  })
+                  onChange("current_medications", e.target.value)
                 }
                 disabled={!isEditing}
                 placeholder="List current medications"
@@ -294,29 +343,20 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Account Security Section */}
+        {/* Timestamps */}
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-[#235F72] mb-4">
-            Account Security
-          </h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-              <div>
-                <div className="font-medium text-gray-700">Last Login</div>
-                <div className="text-sm text-gray-500">
-                  October 25, 2024 - 10:30 AM
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+            <div>
+              <span className="font-medium text-gray-700">Created At:</span>{" "}
+              {currentPatient?.created_at
+                ? new Date(currentPatient.created_at).toLocaleString()
+                : "-"}
             </div>
-
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-              <div>
-                <div className="font-medium text-gray-700">Password</div>
-                <div className="text-sm text-gray-500">••••••••••</div>
-              </div>
-              <button className="bg-[#085DB6] text-white px-4 py-2 rounded-lg hover:bg-[#074a9b] transition duration-200">
-                Change Password
-              </button>
+            <div>
+              <span className="font-medium text-gray-700">Updated At:</span>{" "}
+              {currentPatient?.updated_at
+                ? new Date(currentPatient.updated_at).toLocaleString()
+                : "-"}
             </div>
           </div>
         </div>

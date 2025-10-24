@@ -6,6 +6,12 @@ import visitSlice from "./slices/visitSlice";
 import testOrderSlice from "./slices/testOrderSlice";
 import testResultSlice from "./slices/testResultSlice";
 import uiSlice from "./slices/uiSlice";
+import clinicSlice from "./slices/clinicSlice";
+import activityLogSlice from "./slices/activityLogSlice";
+import userSlice from "./slices/userSlice";
+import testParameterSlice from "./slices/testParameterSlice";
+import dynamicQuestionSlice from "./slices/dynamicQuestionSlice";
+import referenceRangeSlice from "./slices/referenceRangeSlice";
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +22,12 @@ export const store = configureStore({
     testOrders: testOrderSlice,
     testResults: testResultSlice,
     ui: uiSlice,
+    clinic: clinicSlice,
+    activityLogs: activityLogSlice,
+    users: userSlice,
+    testParameters: testParameterSlice,
+    dynamicQuestions: dynamicQuestionSlice,
+    referenceRanges: referenceRangeSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -8,8 +8,10 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { Provider } from "react-redux";
-import { store } from "./store"; // Import Redux store
+import { store } from "./store";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Import all your components
 import LandingPage from "./components/landing/LandingPage";
@@ -17,15 +19,16 @@ import LoginPage from "./components/auth/LoginPage";
 import RegisterPage from "./components/auth/RegisterPage";
 // Receptionist Components
 import ReceptionistDashboard from "./components/receptionist/Dashboard";
-import PatientRegistration from "./components/receptionist/PatientRegistration";
+import PatientRegistrationFlow from "./components/receptionist/PatientRegistrationFlow";
 import PatientSearch from "./components/receptionist/PatientSearch";
 import TestOrders from "./components/receptionist/TestOrders";
 import PatientDetails from "./components/receptionist/PatientDetails";
+import Visits from "./components/receptionist/Visits";
+import TestOrdersList from "./components/receptionist/TestOrdersList";
 
 // Laboratory Components
 import Dashboard from "./components/laboratory/Dashboard";
-import PendingTests from "./components/laboratory/PendingTests";
-import CompletedTests from "./components/laboratory/CompletedTests";
+import TestWorkbench from "./components/laboratory/TestWorkbench"; 
 import ResultEntryForm from "./components/laboratory/ResultEntryForm";
 
 // Patient Components
@@ -77,6 +80,9 @@ const AppLayout = ({ children, title }) => {
     if (pathname.startsWith("/receptionist/search-patient")) return "search";
     if (pathname.startsWith("/receptionist/test-orders")) return "orders";
     if (pathname.startsWith("/receptionist/today-visits")) return "visits";
+    if (pathname.startsWith("/receptionist/test-order-list")) return "orders";
+    if (pathname.startsWith("/receptionist/test-orders")) return "orders";
+
     if (pathname.startsWith("/laboratory/pending-tests")) return "pending";
     if (pathname.startsWith("/laboratory/completed-tests")) return "completed";
     if (pathname.startsWith("/laboratory/results-history")) return "history";
@@ -125,6 +131,17 @@ const AppContent = () => {
   return (
     <AuthProvider>
       <div className="App">
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          newestOnTop
+          closeOnClick
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          containerStyle={{ zIndex: 999999 }}
+        />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -147,7 +164,7 @@ const AppContent = () => {
             element={
               <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
                 <AppLayout title="Register Patient">
-                  <PatientRegistration />
+                  <PatientRegistrationFlow />
                 </AppLayout>
               </ProtectedRoute>
             }
@@ -173,11 +190,31 @@ const AppContent = () => {
             }
           />
           <Route
-            path="/receptionist/patient-details/:patientId"
+            path="/receptionist/patient-details/:id"
             element={
               <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
                 <AppLayout title="Patient Details">
                   <PatientDetails />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/visits"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Visits">
+                  <Visits />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/receptionist/test-order-list"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <AppLayout title="Test Orders">
+                  <TestOrdersList />
                 </AppLayout>
               </ProtectedRoute>
             }
@@ -193,7 +230,7 @@ const AppContent = () => {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/laboratory/pending-tests"
             element={
               <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
@@ -202,13 +239,13 @@ const AppContent = () => {
                 </AppLayout>
               </ProtectedRoute>
             }
-          />
+          /> */}
           <Route
-            path="/laboratory/completed-tests"
+            path="/laboratory/workbench"
             element={
               <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-                <AppLayout title="Completed Tests">
-                  <CompletedTests />
+                <AppLayout title="Lab Workbench">
+                  <TestWorkbench />
                 </AppLayout>
               </ProtectedRoute>
             }

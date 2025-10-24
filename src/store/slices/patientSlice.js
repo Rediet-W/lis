@@ -7,7 +7,7 @@ export const fetchPatients = createAsyncThunk(
     try {
       const { auth } = getState();
       const response = await patientService.getAllPatients(auth.token);
-      return response.data;
+      return response.data?.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch patients"
@@ -22,7 +22,7 @@ export const fetchPatientById = createAsyncThunk(
     try {
       const { auth } = getState();
       const response = await patientService.getPatientById(id, auth.token);
-      return response.data;
+      return response.data?.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch patient"
@@ -42,8 +42,9 @@ export const createPatient = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
+      console.log("error", error.response);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to create patient"
+        error.response?.data?.errors || "Failed to create patient"
       );
     }
   }

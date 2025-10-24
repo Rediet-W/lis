@@ -30,22 +30,22 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             path: "/receptionist/register-patient",
           },
           {
-            icon: "🔍",
-            label: "Search Patient",
+            icon: "🏥",
+            label: "Order Tests",
             id: "search",
             path: "/receptionist/search-patient",
           },
           {
-            icon: "🏥",
+            icon: "📦",
             label: "Test Orders",
             id: "orders",
-            path: "/receptionist/test-orders",
+            path: "/receptionist/test-order-list",
           },
           {
             icon: "📋",
-            label: "Today Visits",
+            label: "Visits",
             id: "visits",
-            path: "/receptionist/today-visits",
+            path: "/receptionist/visits",
           },
         ];
       case "laboratorist":
@@ -57,16 +57,10 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             path: "/laboratory/dashboard",
           },
           {
-            icon: "🔬",
-            label: "Pending Tests",
-            id: "pending",
-            path: "/laboratory/pending-tests",
-          },
-          {
-            icon: "✅",
-            label: "Completed Tests",
-            id: "completed",
-            path: "/laboratory/completed-tests",
+            icon: "🧪",
+            label: "Workbench",
+            id: "lab-workbench",
+            path: "/laboratory/workbench",
           },
           {
             icon: "📝",

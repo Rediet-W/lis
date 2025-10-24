@@ -1,54 +1,106 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchPatients,
+  fetchPatientById,
+} from "../../store/slices/patientSlice";
 
 const PatientSearch = () => {
   const navigate = useNavigate();
-  const [searchType, setSearchType] = useState("card");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPatient, setSelectedPatient] = useState(null);
-
-  const patients = [
-    {
-      id: 1,
-      name: "Abel Teshome",
-      cardNumber: "CLN-001",
-      phone: "+251 91 234 5678",
-      lastVisit: "Oct 25, 2024",
-      age: 25,
-      gender: "Male",
-    },
-    {
-      id: 2,
-      name: "Sara Mohammed",
-      cardNumber: "CLN-002",
-      phone: "+251 92 345 6789",
-      lastVisit: "Oct 24, 2024",
-      age: 30,
-      gender: "Female",
-    },
-    {
-      id: 3,
-      name: "Mikias Haile",
-      cardNumber: "CLN-003",
-      phone: "+251 93 456 7890",
-      lastVisit: "Oct 23, 2024",
-      age: 45,
-      gender: "Male",
-    },
-  ];
-
-  const filteredPatients = patients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.cardNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.phone.includes(searchTerm)
+  const dispatch = useDispatch();
+  const { patients, loading, error, currentPatient } = useSelector(
+    (state) => state.patients
   );
 
-  const handleSelectPatient = (patient) => {
-    // Navigate to patient details with patient ID
+  const patientList = Array.isArray(patients) ? patients : patients?.data || [];
+  const [searchType, setSearchType] = useState("name");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [localSearchResults, setLocalSearchResults] = useState([]);
+
+  // Load all patients on component mount
+  useEffect(() => {
+    dispatch(fetchPatients());
+  }, [dispatch]);
+
+  // Filter patients locally based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setLocalSearchResults([]);
+      return;
+    }
+
+    const filtered = patientList.filter((patient) => {
+      console.log("one", patient);
+      const searchLower = searchTerm.toLowerCase();
+
+      switch (searchType) {
+        case "card":
+          return patient.card_number?.toLowerCase().includes(searchLower);
+        case "phone":
+          return patient.phone?.includes(searchTerm);
+        case "name":
+        default:
+          return patient.full_name?.toLowerCase().includes(searchLower);
+      }
+    });
+
+    setLocalSearchResults(filtered);
+  }, [searchTerm, searchType, patients]);
+
+  const handleSelectPatient = async (patient) => {
+    try {
+      // Fetch full patient details
+      const result = await dispatch(fetchPatientById(patient.id)).unwrap();
+      setSelectedPatient(result);
+    } catch (error) {
+      console.error("Failed to fetch patient details:", error);
+      // Fallback to basic patient data if detailed fetch fails
+      setSelectedPatient(patient);
+    }
+  };
+
+  const handleAssignTests = (patient) => {
+    navigate("/receptionist/test-orders", {
+      state: {
+        patient: patient,
+        from: "patient-search",
+      },
+    });
+  };
+
+  const handleViewHistory = (patient) => {
     navigate(`/receptionist/patient-details/${patient.id}`, {
       state: { patient },
     });
+  };
+
+  const handleEditPatient = (patient) => {
+    navigate("/receptionist/register-patient", {
+      state: {
+        patient: patient,
+        editMode: true,
+      },
+    });
+  };
+
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return "N/A";
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
   };
 
   return (
@@ -80,14 +132,17 @@ const PatientSearch = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
               />
-              <button className="bg-[#235F72] text-white px-6 py-3 rounded-r-lg hover:bg-[#1a4a5a] transition duration-200">
-                Search
+              <button
+                className="bg-[#235F72] text-white px-6 py-3 rounded-r-lg hover:bg-[#1a4a5a] transition duration-200"
+                onClick={() => dispatch(fetchPatients())}
+              >
+                {loading ? "Loading..." : "Refresh"}
               </button>
             </div>
           </div>
 
           <div className="flex space-x-2">
-            {["card", "phone", "name"].map((type) => (
+            {["name", "card", "phone"].map((type) => (
               <button
                 key={type}
                 onClick={() => setSearchType(type)}
@@ -106,14 +161,93 @@ const PatientSearch = () => {
             ))}
           </div>
         </div>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
       </div>
 
       {/* Search Results */}
       {searchTerm && (
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h3 className="text-lg font-semibold text-[#235F72] mb-4">
-            Search Results: "{searchTerm}" - Found {filteredPatients.length}{" "}
+            Search Results: "{searchTerm}" - Found {localSearchResults.length}{" "}
             patients
+          </h3>
+
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#235F72] mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading patients...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="text-left py-3 text-[#235F72] font-semibold">
+                      Name
+                    </th>
+                    <th className="text-left py-3 text-[#235F72] font-semibold">
+                      Card No.
+                    </th>
+                    <th className="text-left py-3 text-[#235F72] font-semibold">
+                      Phone
+                    </th>
+                    <th className="text-left py-3 text-[#235F72] font-semibold">
+                      Age
+                    </th>
+                    <th className="text-left py-3 text-[#235F72] font-semibold">
+                      Gender
+                    </th>
+                    <th className="text-left py-3 text-[#235F72] font-semibold">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {localSearchResults.map((patient) => (
+                    <tr
+                      key={patient.id}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="py-3 font-medium">{patient.full_name}</td>
+                      <td className="py-3">{patient.card_number}</td>
+                      <td className="py-3">{patient.phone}</td>
+                      <td className="py-3">
+                        {calculateAge(patient.date_of_birth)}
+                      </td>
+                      <td className="py-3 capitalize">{patient.gender}</td>
+                      <td className="py-3">
+                        <button
+                          onClick={() => handleSelectPatient(patient)}
+                          className="text-[#085DB6] hover:text-[#074a9b] font-medium"
+                        >
+                          Select
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {localSearchResults.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No patients found matching your search criteria.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* All Patients List (when no search) */}
+      {!searchTerm && patientList.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <h3 className="text-lg font-semibold text-[#235F72] mb-4">
+            All Patients ({patientList.length})
           </h3>
 
           <div className="overflow-x-auto">
@@ -130,7 +264,10 @@ const PatientSearch = () => {
                     Phone
                   </th>
                   <th className="text-left py-3 text-[#235F72] font-semibold">
-                    Last Visit
+                    Age
+                  </th>
+                  <th className="text-left py-3 text-[#235F72] font-semibold">
+                    Gender
                   </th>
                   <th className="text-left py-3 text-[#235F72] font-semibold">
                     Action
@@ -138,18 +275,21 @@ const PatientSearch = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredPatients.map((patient) => (
+                {patientList.map((patient) => (
                   <tr
                     key={patient.id}
                     className="border-b border-gray-100 hover:bg-gray-50"
                   >
-                    <td className="py-3">{patient.name}</td>
-                    <td className="py-3">{patient.cardNumber}</td>
+                    <td className="py-3 font-medium">{patient.full_name}</td>
+                    <td className="py-3">{patient.card_number}</td>
                     <td className="py-3">{patient.phone}</td>
-                    <td className="py-3">{patient.lastVisit}</td>
+                    <td className="py-3">
+                      {calculateAge(patient.date_of_birth)}
+                    </td>
+                    <td className="py-3 capitalize">{patient.gender}</td>
                     <td className="py-3">
                       <button
-                        onClick={() => setSelectedPatient(patient)}
+                        onClick={() => handleSelectPatient(patient)}
                         className="text-[#085DB6] hover:text-[#074a9b] font-medium"
                       >
                         Select
@@ -168,7 +308,8 @@ const PatientSearch = () => {
         <div className="bg-white rounded-xl shadow-md p-6">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-semibold text-[#235F72]">
-              ✅ Selected: {selectedPatient.name} ({selectedPatient.cardNumber})
+              ✅ Selected: {selectedPatient.full_name} (
+              {selectedPatient.card_number})
             </h3>
             <button
               onClick={() => setSelectedPatient(null)}
@@ -180,32 +321,78 @@ const PatientSearch = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
             <div>
-              Age: {selectedPatient.age} | Gender: {selectedPatient.gender}
+              <strong>Age:</strong>{" "}
+              {calculateAge(selectedPatient.date_of_birth)} |{" "}
+              <strong>Gender:</strong> {selectedPatient.gender}
             </div>
-            <div>Phone: {selectedPatient.phone}</div>
-            <div>Last Test: Oct 25, 2024 - CBC, Glucose</div>
+            <div>
+              <strong>Phone:</strong> {selectedPatient.phone}
+            </div>
+            <div>
+              <strong>Email:</strong> {selectedPatient.email || "N/A"}
+            </div>
+            <div>
+              <strong>Blood Type:</strong> {selectedPatient.blood_type || "N/A"}
+            </div>
+            <div>
+              <strong>Address:</strong> {selectedPatient.address || "N/A"}
+            </div>
+            <div>
+              <strong>Emergency Contact:</strong>{" "}
+              {selectedPatient.emergency_contact || "N/A"}
+            </div>
           </div>
+
+          {/* Medical Information */}
+          {(selectedPatient.known_allergies ||
+            selectedPatient.chronic_conditions ||
+            selectedPatient.current_medications) && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold text-[#235F72] mb-2">
+                Medical Information:
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                {selectedPatient.known_allergies &&
+                  selectedPatient.known_allergies !== "None" && (
+                    <div>
+                      <strong>Allergies:</strong>{" "}
+                      {selectedPatient.known_allergies}
+                    </div>
+                  )}
+                {selectedPatient.chronic_conditions &&
+                  selectedPatient.chronic_conditions !== "None" && (
+                    <div>
+                      <strong>Conditions:</strong>{" "}
+                      {selectedPatient.chronic_conditions}
+                    </div>
+                  )}
+                {selectedPatient.current_medications &&
+                  selectedPatient.current_medications !== "None" && (
+                    <div>
+                      <strong>Medications:</strong>{" "}
+                      {selectedPatient.current_medications}
+                    </div>
+                  )}
+              </div>
+            </div>
+          )}
 
           <div className="flex space-x-3">
             <button
               className="bg-[#085DB6] text-white px-4 py-2 rounded-lg hover:bg-[#074a9b] transition duration-200"
-              onClick={() => handleSelectPatient(selectedPatient)}
+              onClick={() => handleViewHistory(selectedPatient)}
             >
               View History
             </button>
             <button
               className="bg-[#36F1A2] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#2dd191] transition duration-200"
-              onClick={() =>
-                navigate("/receptionist/register-patient", {
-                  state: { patient: selectedPatient },
-                })
-              }
+              onClick={() => handleAssignTests(selectedPatient)}
             >
               Assign Tests
             </button>
             <button
               className="border border-[#235F72] text-[#235F72] px-4 py-2 rounded-lg hover:bg-[#235F72] hover:text-white transition duration-200"
-              onClick={() => handleSelectPatient(selectedPatient)}
+              onClick={() => handleEditPatient(selectedPatient)}
             >
               Edit Info
             </button>
