@@ -18,7 +18,7 @@ export const useAuth = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login");
+    navigate("/");
   };
 
   const hasRole = (role) => {

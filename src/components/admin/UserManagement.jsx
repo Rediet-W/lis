@@ -16,8 +16,11 @@ const UserManagement = () => {
   const [roleFilter, setRoleFilter] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
+  const [confirmAction, setConfirmAction] = useState(null); // { id, mode: 'activate' | 'deactivate' }
+  const [pendingAction, setPendingAction] = useState(false);
+
+  const asBool = (v) => v === true || v === 1 || v === "1";
   const [newUser, setNewUser] = useState({
     full_name: "",
     role: "",
@@ -161,6 +164,7 @@ const UserManagement = () => {
       ...user,
       // Use the actual backend role value
       role: user.role,
+      is_active: asBool(user.is_active),
     });
   };
 
@@ -181,7 +185,7 @@ const UserManagement = () => {
       email: editingUser.email,
       phone: editingUser.phone || "",
       role: editingUser.role,
-      is_active: editingUser.is_active ? 1 : 0,
+      is_active: asBool(editingUser.is_active) ? 1 : 0,
     };
 
     try {
@@ -196,26 +200,32 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeactivateUser = async (userId) => {
+  const handleConfirmStatusChange = async () => {
+    if (!confirmAction?.id) return;
+    const makeActive = confirmAction.mode === "activate";
     try {
+      setPendingAction(true);
       await dispatch(
-        toggleUserStatusThunk({ id: userId, makeActive: false })
+        toggleUserStatusThunk({ id: confirmAction.id, makeActive })
       ).unwrap();
-      setShowDeleteConfirm(null);
+      await dispatch(getUsers()).unwrap(); // refetch list
+      setConfirmAction(null); // close modal
     } catch (e) {
-      // Error is already handled in the thunk with toast
-      console.error("Failed to deactivate user:", e);
+      console.error("Failed to update status:", e);
+      setConfirmAction(null); // also close on error
+    } finally {
+      setPendingAction(false);
     }
   };
-
   const handleStatusToggle = async (userId) => {
     const user = users.find((u) => u.id === userId);
     if (!user) return;
-    const makeActive = !user.is_active;
+    const makeActive = !asBool(user.is_active);
     try {
       await dispatch(
         toggleUserStatusThunk({ id: userId, makeActive })
       ).unwrap();
+      await dispatch(getUsers());
     } catch (e) {
       // Error is already handled in the thunk with toast
       console.error("Failed to update status:", e);
@@ -331,76 +341,87 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
-                <tr
-                  key={user.id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="py-4 px-6">
-                    <div className="font-medium text-[#235F72]">
-                      {user.full_name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      @{user.username}
-                    </div>
-                    <div className="text-xs text-gray-400">ID: {user.id}</div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        user.role === "admin"
-                          ? "bg-purple-100 text-purple-800 border border-purple-200"
-                          : user.role === "receptionist"
-                          ? "bg-blue-100 text-blue-800 border border-blue-200"
-                          : "bg-green-100 text-green-800 border border-green-200"
-                      }`}
-                    >
-                      {roleToDisplay(user.role)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-gray-600">{user.email}</div>
-                    <div className="text-sm text-gray-500">
-                      {formatPhone(user.phone)}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <button
-                      onClick={() => handleStatusToggle(user.id)}
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition duration-200 ${
-                        user.is_active
-                          ? "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
-                          : "bg-red-100 text-red-800 border border-red-200 hover:bg-red-200"
-                      }`}
-                    >
-                      {user.is_active ? "✅ Active" : "❌ Inactive"}
-                    </button>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="text-sm text-gray-600">
-                      {formatDate(user.created_at)}
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex space-x-3">
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="text-[#085DB6] hover:text-[#074a9b] font-medium text-sm"
+              {filteredUsers.map((user) => {
+                const isActive = asBool(user.is_active);
+                return (
+                  <tr
+                    key={user.id}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="py-4 px-6">
+                      <div className="font-medium text-[#235F72]">
+                        {user.full_name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        @{user.username}
+                      </div>
+                      <div className="text-xs text-gray-400">ID: {user.id}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          user.role === "admin"
+                            ? "bg-purple-100 text-purple-800 border border-purple-200"
+                            : user.role === "receptionist"
+                            ? "bg-blue-100 text-blue-800 border border-blue-200"
+                            : "bg-green-100 text-green-800 border border-green-200"
+                        }`}
                       >
-                        Edit
-                      </button>
-                      <span className="text-gray-300">|</span>
+                        {roleToDisplay(user.role)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-gray-600">{user.email}</div>
+                      <div className="text-sm text-gray-500">
+                        {formatPhone(user.phone)}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
                       <button
-                        onClick={() => setShowDeleteConfirm(user.id)}
-                        className="text-red-600 hover:text-red-800 font-medium text-sm"
-                        disabled={!user.is_active}
+                        onClick={() => handleStatusToggle(user.id)}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition duration-200 ${
+                          isActive
+                            ? "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
+                            : "bg-red-100 text-red-800 border border-red-200 hover:bg-red-200"
+                        }`}
                       >
-                        Deactivate
+                        {isActive ? "✅ Active" : "❌ Inactive"}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="text-sm text-gray-600">
+                        {formatDate(user.created_at)}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="text-[#085DB6] hover:text-[#074a9b] font-medium text-sm"
+                        >
+                          Edit
+                        </button>
+                        <span className="text-gray-300">|</span>
+                        <button
+                          onClick={() =>
+                            setConfirmAction({
+                              id: user.id,
+                              mode: isActive ? "deactivate" : "activate",
+                            })
+                          }
+                          className={`font-medium text-sm ${
+                            isActive
+                              ? "text-red-600 hover:text-red-800"
+                              : "text-green-600 hover:text-green-800"
+                          }`}
+                        >
+                          {isActive ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -719,28 +740,42 @@ const UserManagement = () => {
       )}
 
       {/* Deactivate Confirmation Modal */}
-      {showDeleteConfirm && (
+      {confirmAction && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-[#235F72] mb-4">
-              Confirm Deactivate
+              Confirm{" "}
+              {confirmAction.mode === "deactivate" ? "Deactivate" : "Activate"}
             </h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to deactivate this user? They will no longer
-              be able to access the system.
+              Are you sure you want to{" "}
+              {confirmAction.mode === "deactivate" ? "deactivate" : "activate"}{" "}
+              this user? They will{" "}
+              {confirmAction.mode === "deactivate" ? "no longer" : "again"} be
+              able to access the system.
             </p>
             <div className="flex justify-end space-x-3">
               <button
-                onClick={() => setShowDeleteConfirm(null)}
+                onClick={() => setConfirmAction(null)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200"
+                disabled={pendingAction}
               >
                 Cancel
               </button>
               <button
-                onClick={() => handleDeactivateUser(showDeleteConfirm)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
+                onClick={handleConfirmStatusChange}
+                className={`px-4 py-2 text-white rounded-lg transition duration-200 ${
+                  confirmAction.mode === "deactivate"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
+                disabled={pendingAction}
               >
-                Deactivate User
+                {pendingAction
+                  ? "Please wait..."
+                  : confirmAction.mode === "deactivate"
+                  ? "Deactivate User"
+                  : "Activate User"}
               </button>
             </div>
           </div>

@@ -31,6 +31,34 @@ export const fetchPatientById = createAsyncThunk(
   }
 );
 
+export const fetchMyPatient = createAsyncThunk(
+  "patients/fetchMyPatient",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await patientService.getMyPatient();
+      return res.data?.data ?? res.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to load profile"
+      );
+    }
+  }
+);
+
+export const updateMyPatient = createAsyncThunk(
+  "patients/updateMyPatient",
+  async (patientData, { rejectWithValue }) => {
+    try {
+      const res = await patientService.updateMyPatient(patientData);
+      return res.data?.data ?? res.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to update profile"
+      );
+    }
+  }
+);
+
 export const createPatient = createAsyncThunk(
   "patients/createPatient",
   async (patientData, { rejectWithValue, getState }) => {
@@ -179,6 +207,30 @@ const patientSlice = createSlice({
         state.searchResults = action.payload;
       })
       .addCase(searchPatients.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchMyPatient.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMyPatient.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentPatient = action.payload;
+      })
+      .addCase(fetchMyPatient.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateMyPatient.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateMyPatient.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentPatient = action.payload || state.currentPatient;
+      })
+      .addCase(updateMyPatient.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

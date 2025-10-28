@@ -28,7 +28,7 @@ import TestOrdersList from "./components/receptionist/TestOrdersList";
 
 // Laboratory Components
 import Dashboard from "./components/laboratory/Dashboard";
-import TestWorkbench from "./components/laboratory/TestWorkbench"; 
+import TestWorkbench from "./components/laboratory/TestWorkbench";
 import ResultEntryForm from "./components/laboratory/ResultEntryForm";
 
 // Patient Components
@@ -57,7 +57,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (!user) {
     console.log("no user");
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (!allowedRoles.includes(user.role)) {

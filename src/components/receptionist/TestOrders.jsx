@@ -581,7 +581,7 @@ const TestOrders = () => {
           <div className="flex justify-between space-x-4 pt-6 border-t mt-6">
             <button
               type="button"
-              onClick={() => navigate("/receptionist/patient-search")}
+              onClick={() => navigate("/receptionist/test-order-list")}
               className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200 font-semibold"
             >
               ← Back to Patient Search

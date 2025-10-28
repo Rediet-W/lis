@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { createPatient } from "../../store/slices/patientSlice";
 import { fetchTests } from "../../store/slices/testSlice";
+import { createUser } from "../../store/slices/userSlice";
 
 const PatientRegistration = ({ onPatientRegistered }) => {
   const dispatch = useDispatch();
@@ -21,7 +22,6 @@ const PatientRegistration = ({ onPatientRegistered }) => {
     known_allergies: "",
     chronic_conditions: "",
     current_medications: "",
-    password: "",
   });
 
   const [cardNumber, setCardNumber] = useState(
@@ -53,12 +53,41 @@ const PatientRegistration = ({ onPatientRegistered }) => {
       toast.error("Please fill in required fields: Full Name and Phone");
       return;
     }
+    let newUserId = null;
+    const tempPassword = (formData.phone || "").trim() || cardNumber; // fallback: use cardNumber if phone is empty
+
+    try {
+      const userPayload = {
+        username: cardNumber,
+        email: formData.email || null,
+        phone: formData.phone,
+        full_name: formData.full_name,
+        role: "patient",
+        password: tempPassword,
+        is_active: 1,
+      };
+
+      const createdUser = await dispatch(createUser(userPayload)).unwrap();
+      // unwrap may return the entity directly or {data: {...}}
+      const normalizedUser = createdUser?.data ?? createdUser;
+      newUserId = normalizedUser?.id;
+
+      if (!newUserId) {
+        toast.error("Failed to create user account");
+        return;
+      }
+    } catch (err) {
+      const msg = err?.message || "Failed to create user account";
+      toast.error(msg);
+      return;
+    }
 
     try {
       // Create patient
       const patientPayload = {
         ...formData,
         card_number: cardNumber,
+        user_id: newUserId,
       };
 
       const result = await dispatch(createPatient(patientPayload)).unwrap();
@@ -189,21 +218,6 @@ const PatientRegistration = ({ onPatientRegistered }) => {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     placeholder="patient@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
-                    placeholder="Enter password"
-                    required
                   />
                 </div>
 

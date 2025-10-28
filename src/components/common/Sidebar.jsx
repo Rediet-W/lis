@@ -10,7 +10,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login");
+    navigate("/");
   };
 
   const getSidebarItems = () => {
@@ -50,12 +50,12 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
         ];
       case "laboratorist":
         return [
-          {
-            icon: "📊",
-            label: "Dashboard",
-            id: "dashboard",
-            path: "/laboratory/dashboard",
-          },
+          // {
+          //   icon: "📊",
+          //   label: "Dashboard",
+          //   id: "dashboard",
+          //   path: "/laboratory/dashboard",
+          // },
           {
             icon: "🧪",
             label: "Workbench",

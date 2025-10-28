@@ -20,6 +20,9 @@ const patientService = {
   searchPatients: (query) => {
     return api.get("/patients/search", { params: { q: query } });
   },
+
+  getMyPatient: () => api.get("/patients/me"),
+  updateMyPatient: (data) => api.put("/patients/me", data),
 };
 
 export default patientService;

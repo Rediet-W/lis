@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
-  fetchPatientById,
-  updatePatient,
+  fetchMyPatient,
+  updateMyPatient,
 } from "../../store/slices/patientSlice";
 
 const ProfilePage = () => {
@@ -12,15 +12,6 @@ const ProfilePage = () => {
   const { currentPatient, loading, error } = useSelector(
     (s) => s.patients || {}
   );
-  console.log("currentPatient", currentPatient);
-  const { user } = useSelector((s) => s.auth || {});
-  const routeId = user.id;
-  // Determine the patient id (route > auth mapping)
-  const patientId = useMemo(() => {
-    if (routeId) return Number(routeId);
-    // if your auth stores the mapped patient id, prefer it
-    return user?.patient_id || user?.patientId || currentPatient?.id || null;
-  }, [routeId, user?.patient_id, user?.patientId, currentPatient?.id]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,8 +32,8 @@ const ProfilePage = () => {
 
   // Fetch profile
   useEffect(() => {
-    if (patientId) dispatch(fetchPatientById(patientId));
-  }, [dispatch, patientId]);
+    dispatch(fetchMyPatient());
+  }, [dispatch]);
 
   // Hydrate form from backend response
   useEffect(() => {
@@ -77,26 +68,27 @@ const ProfilePage = () => {
   }, [formData.date_of_birth]);
 
   const handleSave = async () => {
-    if (!patientId) return;
     try {
+      const {
+        email: _omitEmail,
+        phone: _omitPhone,
+        card_number: _omitCardNumber,
+        ...editable
+      } = formData;
+
       await dispatch(
-        updatePatient({
-          id: patientId,
-          patientData: {
-            ...formData,
-            // keep nulls for optional fields if empty
-            email: formData.email || null,
-            emergency_contact: formData.emergency_contact || null,
-            known_allergies: formData.known_allergies || null,
-            chronic_conditions: formData.chronic_conditions || null,
-            current_medications: formData.current_medications || null,
-            date_of_birth: formData.date_of_birth || null,
-          },
+        updateMyPatient({
+          ...editable,
+          emergency_contact: editable.emergency_contact || null,
+          known_allergies: editable.known_allergies || null,
+          chronic_conditions: editable.chronic_conditions || null,
+          current_medications: editable.current_medications || null,
+          date_of_birth: editable.date_of_birth || null,
         })
       ).unwrap();
       setIsEditing(false);
       // refresh
-      dispatch(fetchPatientById(patientId));
+      dispatch(fetchMyPatient());
     } catch (e) {
       // handled by slice; keep UI state intact
     }
@@ -216,8 +208,8 @@ const ProfilePage = () => {
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => onChange("phone", e.target.value)}
-                disabled={!isEditing}
+                readonly
+                disabled
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>
@@ -242,8 +234,8 @@ const ProfilePage = () => {
               <input
                 type="email"
                 value={formData.email || ""}
-                onChange={(e) => onChange("email", e.target.value)}
-                disabled={!isEditing}
+                readonly
+                disabled
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
             </div>

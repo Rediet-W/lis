@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import testOrderService from "../../services/testOrderService";
+const ensureArray = (v) =>
+  Array.isArray(v) ? v : v?.data && Array.isArray(v.data) ? v.data : [];
 
 export const fetchTestOrders = createAsyncThunk(
   "testOrders/fetchTestOrders",
@@ -132,9 +134,9 @@ const testOrderSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchTestOrders.fulfilled, (state, action) => {
-        state.loading = false;
-        state.testOrders = action.payload;
+      .addCase(fetchTestOrders.fulfilled, (s, a) => {
+        s.loading = false;
+        s.testOrders = ensureArray(a.payload);
       })
       .addCase(fetchTestOrders.rejected, (state, action) => {
         state.loading = false;

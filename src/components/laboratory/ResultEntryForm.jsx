@@ -10,6 +10,7 @@ import {
 } from "../../store/slices/parameterResultSlice";
 import { fetchTestOrderResults } from "../../store/slices/testOrderSlice";
 import { toast } from "react-toastify";
+import { fetchQuestionsByTest } from "../../store/slices/dynamicQuestionSlice";
 
 const ResultEntryForm = ({
   order,
@@ -45,8 +46,28 @@ const ResultEntryForm = ({
   });
 
   const [parameterResults, setParameterResults] = useState({});
-  const [currentSection, setCurrentSection] = useState("main");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { questionsByTest = {}, loading: dqLoading } = useSelector(
+    (s) => s.dynamicQuestions || { questionsByTest: {}, loading: false }
+  );
+  const testId = order?.test_id || testDetails?.id;
+  useEffect(() => {
+    if (testId && !questionsByTest[testId]) {
+      dispatch(fetchQuestionsByTest(testId));
+    }
+  }, [dispatch, testId, questionsByTest]);
+
+  const questionMap = useMemo(() => {
+    const list = Array.isArray(questionsByTest[testId])
+      ? questionsByTest[testId]
+      : [];
+    const map = {};
+    for (const q of list) {
+      if (!q) continue;
+      map[String(q.id)] = q;
+    }
+    return map;
+  }, [questionsByTest, testId]);
 
   // Fetch existing results
   useEffect(() => {
@@ -133,7 +154,6 @@ const ResultEntryForm = ({
       is_verified: false,
     });
     setParameterResults({});
-    setCurrentSection(0);
   };
 
   // Add null check for order
@@ -504,15 +524,52 @@ const ResultEntryForm = ({
 
   // Enhanced dynamic questions display with question-answer pairing
   const renderDynamicQuestions = () => {
-    if (
-      !order.dynamic_answers ||
-      Object.keys(order.dynamic_answers).length === 0
-    ) {
-      return null;
-    }
+    const answers = order?.dynamic_answers;
+    if (!answers || Object.keys(answers).length === 0) return null;
 
-    // Get questions from dynamic_questions_info or use default
-    const questionsInfo = order.dynamic_questions_info || {};
+    // Normalize options to [{ value, label }, ...]
+    const normalizeOptions = (opts) => {
+      if (!opts) return [];
+      if (Array.isArray(opts)) {
+        // Accept ["Yes","No"] or [{value,label}]
+        return opts.map((o) =>
+          typeof o === "string"
+            ? { value: o, label: o }
+            : { value: o.value ?? o.label, label: o.label ?? String(o.value) }
+        );
+      }
+      if (typeof opts === "object") {
+        // Accept { yes: "Yes", no: "No" }
+        return Object.entries(opts).map(([value, label]) => ({
+          value,
+          label: typeof label === "string" ? label : String(label),
+        }));
+      }
+      return [];
+    };
+
+    const valueToLabel = (q, val) => {
+      if (val == null || val === "") return "Not specified";
+      const options = normalizeOptions(q?.options);
+      const findLabel = (v) => {
+        const found = options.find(
+          (opt) => String(opt.value).toLowerCase() === String(v).toLowerCase()
+        );
+        return found ? found.label : String(v);
+      };
+      if (Array.isArray(val)) {
+        return val.map(findLabel).join(", ");
+      }
+      if (typeof val === "object") {
+        // Fallback if stored as object
+        try {
+          return JSON.stringify(val);
+        } catch {
+          return String(val);
+        }
+      }
+      return findLabel(val);
+    };
 
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -521,24 +578,15 @@ const ResultEntryForm = ({
           Patient-Specific Information
         </h4>
         <div className="space-y-3">
-          {Object.entries(order.dynamic_answers).map(([key, value]) => {
-            // Get the question text from questions info or format the key
-            const questionText =
-              questionsInfo[key] ||
-              key
-                .split("_")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(" ");
-
+          {Object.entries(answers).map(([id, val]) => {
+            const q = questionMap[String(id)];
+            const qText = q?.question_text || `Question #${id}`;
+            const aText = valueToLabel(q, val);
             return (
-              <div key={key} className="bg-white p-3 rounded border">
-                <div className="font-medium text-gray-700 mb-1">
-                  {questionText}
-                </div>
+              <div key={id} className="bg-white p-3 rounded border">
+                <div className="font-medium text-gray-700 mb-1">{qText}</div>
                 <div className="text-gray-600">
-                  <span className="font-semibold">
-                    {value || "Not specified"}
-                  </span>
+                  <span className="font-semibold">{aText}</span>
                 </div>
               </div>
             );
@@ -756,6 +804,9 @@ const ResultEntryForm = ({
   // Render comments section
   const renderCommentsSection = () => (
     <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-[#235F72]">
+        Comments & Interpretation
+      </h3>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Technical Comments
@@ -820,51 +871,16 @@ const ResultEntryForm = ({
       {/* Enhanced Dynamic Questions Display with proper pairing */}
       {renderDynamicQuestions()}
 
+      {/* ALL SECTIONS IN ONE PAGE - NO TABS */}
+
+      {/* Main Results Section */}
+      {testParameters.length === 0 && renderSimpleResultEntry()}
+
       {/* Test Parameters Section */}
-      <div className="flex gap-2 border-b pb-4">
-        <button
-          type="button"
-          onClick={() => setCurrentSection("main")}
-          className={`px-4 py-2 rounded-lg ${
-            currentSection === "main"
-              ? "bg-[#235F72] text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Main Result
-        </button>
-        {testParameters.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setCurrentSection("parameters")}
-            className={`px-4 py-2 rounded-lg ${
-              currentSection === "parameters"
-                ? "bg-[#235F72] text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            Test Parameters ({testParameters.length})
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setCurrentSection("comments")}
-          className={`px-4 py-2 rounded-lg ${
-            currentSection === "comments"
-              ? "bg-[#235F72] text-white"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Comments & Interpretation
-        </button>
-      </div>
+      {testParameters.length > 0 && renderParameterResults()}
 
-      {/* Results Section */}
-      {currentSection === "main" && renderSimpleResultEntry()}
-      {currentSection === "parameters" && renderParameterResults()}
-
-      {/* Comments Section */}
-      {currentSection === "comments" && renderCommentsSection()}
+      {/* Comments & Interpretation Section */}
+      {renderCommentsSection()}
 
       {/* Action Buttons */}
       <div className="flex gap-3 pt-6 border-t">

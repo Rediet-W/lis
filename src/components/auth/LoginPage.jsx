@@ -38,7 +38,7 @@ const LoginPage = () => {
           navigate("/receptionist/dashboard");
           break;
         case "laboratorist":
-          navigate("/laboratory/dashboard");
+          navigate("/laboratory/workbench");
           break;
         case "patient":
           navigate("/patient/dashboard");
@@ -62,7 +62,6 @@ const LoginPage = () => {
     }
   }, [reduxError, dispatch]);
 
-  // ...existing code...
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -77,8 +76,8 @@ const LoginPage = () => {
       const result = await dispatch(login({ email, password })).unwrap();
 
       // Show success toast immediately (token present)
-      const displayName = result?.user?.full_name || email;
-      toast.success(`Welcome back, ${displayName}!`, { autoClose: 2000 });
+      // const displayName = result?.user?.full_name || email;
+      // toast.success(`Welcome back, ${displayName}!`, { autoClose: 2000 });
 
       // Ensure profile is loaded (if user not returned by login)
       if (result?.token && !result?.user) {

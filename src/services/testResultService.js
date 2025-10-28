@@ -24,6 +24,8 @@ const testResultService = {
   getParameterResults: (testResultId) => {
     return api.get(`/test-results/${testResultId}/parameters`);
   },
+  getMyTestResults: () => api.get("/test-results/my"),
+  getByOrderId: (orderId) => api.get(`/test-results/by-order/${orderId}`),
 };
 
 export default testResultService;
