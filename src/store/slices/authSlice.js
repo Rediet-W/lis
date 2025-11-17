@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import authService from "../../services/authService";
+import api from "../../services/api";
 
 const savedToken = localStorage.getItem("token");
 const savedUser = localStorage.getItem("user");
@@ -48,7 +49,7 @@ const authSlice = createSlice({
   initialState: {
     user: savedUser ? JSON.parse(savedUser) : null,
     token: savedToken || null,
-    isAuthenticated: !!savedToken && !!savedUser,
+    isAuthenticated: !!savedToken,
     loading: false,
     error: null,
   },
@@ -112,5 +113,24 @@ const authSlice = createSlice({
   },
 });
 
+export const performLogout = () => (dispatch) => {
+  // clear axios default Authorization header if present
+  try {
+    if (
+      api &&
+      api.defaults &&
+      api.defaults.headers &&
+      api.defaults.headers.common
+    ) {
+      delete api.defaults.headers.common["Authorization"];
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  dispatch(logout());
+};
 export const { clearError, logout } = authSlice.actions;
 export default authSlice.reducer;

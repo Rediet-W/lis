@@ -13,7 +13,7 @@ const PatientRegistration = ({ onPatientRegistered }) => {
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
-    date_of_birth: "",
+    age: "",
     gender: "",
     address: "",
     emergency_contact: "",
@@ -226,12 +226,12 @@ const PatientRegistration = ({ onPatientRegistered }) => {
                     Date of Birth
                   </label>
                   <input
-                    type="date"
-                    value={formData.date_of_birth}
+                    type="number"
+                    value={formData.age}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        date_of_birth: e.target.value,
+                        age: e.target.value,
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"

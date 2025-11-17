@@ -85,24 +85,6 @@ const PatientSearch = () => {
     });
   };
 
-  // Calculate age from date of birth
-  const calculateAge = (dateOfBirth) => {
-    if (!dateOfBirth) return "N/A";
-    const birthDate = new Date(dateOfBirth);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-
-    return age;
-  };
-
   return (
     <div className="max-w-6xl mx-auto p-6">
       {/* Header */}
@@ -216,9 +198,7 @@ const PatientSearch = () => {
                       <td className="py-3 font-medium">{patient.full_name}</td>
                       <td className="py-3">{patient.card_number}</td>
                       <td className="py-3">{patient.phone}</td>
-                      <td className="py-3">
-                        {calculateAge(patient.date_of_birth)}
-                      </td>
+                      <td className="py-3">{patient.age}</td>
                       <td className="py-3 capitalize">{patient.gender}</td>
                       <td className="py-3">
                         <button
@@ -283,9 +263,7 @@ const PatientSearch = () => {
                     <td className="py-3 font-medium">{patient.full_name}</td>
                     <td className="py-3">{patient.card_number}</td>
                     <td className="py-3">{patient.phone}</td>
-                    <td className="py-3">
-                      {calculateAge(patient.date_of_birth)}
-                    </td>
+                    <td className="py-3">{patient.age}</td>
                     <td className="py-3 capitalize">{patient.gender}</td>
                     <td className="py-3">
                       <button
@@ -321,8 +299,7 @@ const PatientSearch = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
             <div>
-              <strong>Age:</strong>{" "}
-              {calculateAge(selectedPatient.date_of_birth)} |{" "}
+              <strong>Age:</strong> {selectedPatient.age} |{" "}
               <strong>Gender:</strong> {selectedPatient.gender}
             </div>
             <div>

@@ -102,12 +102,12 @@ const LandingPage = () => {
               ) : (
                 <img
                   src="/logo.png"
-                  alt="world laboratory center logo"
+                  alt="World Basic Laboratory  logo"
                   className="h-10 w-auto mr-3"
                 />
               )}
               <span className="text-2xl font-bold text-[#085DB6]">
-                {clinicData?.name || "World Laboratory Center"}
+                {clinicData?.name || "World Basic Laboratory "}
               </span>
             </div>
             <div className="flex space-x-4">
@@ -213,7 +213,7 @@ const LandingPage = () => {
               About Us
             </h2>
             <h3 className="text-3xl font-bold text-[#235F72] mb-6">
-              {clinicData?.name || "World Laboratory Center"}
+              {clinicData?.name || "World Basic Laboratory "}
             </h3>
             <p className="text-gray-600 mb-4">
               {clinicData?.about_text ||
@@ -344,7 +344,7 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-semibold mb-4">
-                {clinicData?.name || "World Laboratory Center"}
+                {clinicData?.name || "World Basic Laboratory "}
               </h3>
               <p className="text-blue-100">
                 Professional medical laboratory services with accurate
@@ -397,7 +397,7 @@ const LandingPage = () => {
           </div>
           <div className="border-t border-blue-400 mt-8 pt-6 text-center text-blue-100">
             <p>
-              &copy; 2025 {clinicData?.name || "World Laboratory Center"}. All
+              &copy; 2025 {clinicData?.name || "World Basic Laboratory "}. All
               rights reserved.
             </p>
           </div>

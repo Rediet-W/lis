@@ -61,9 +61,8 @@ const PatientDetails = () => {
     setFormData({
       full_name: currentPatient.full_name || "",
       phone: currentPatient.phone || "",
-      date_of_birth: currentPatient.date_of_birth
-        ? new Date(currentPatient.date_of_birth).toISOString().slice(0, 10)
-        : "",
+      age: currentPatient.age || "",
+
       gender: currentPatient.gender || "",
       address: currentPatient.address || "",
       emergency_contact: currentPatient.emergency_contact || "",
@@ -163,7 +162,7 @@ const PatientDetails = () => {
       const payload = {
         ...formData,
         // Keep date format acceptable by backend if it expects date string
-        date_of_birth: formData.date_of_birth || null,
+        age: formData.age || null,
       };
       const updated = await dispatch(
         updatePatient({ id: currentPatient.id, patientData: payload })
@@ -337,15 +336,15 @@ const PatientDetails = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date of Birth
+                      Age
                     </label>
                     <input
-                      type="date"
-                      value={formData.date_of_birth || ""}
+                      type="number"
+                      value={formData.age || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          date_of_birth: e.target.value,
+                          age: e.target.value,
                         })
                       }
                       disabled={!isEditing}

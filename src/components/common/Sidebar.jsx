@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../store/slices/authSlice";
+import { performLogout } from "../../store/slices/authSlice";
 
 const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
   const { user } = useSelector((state) => state.auth);
@@ -9,7 +9,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(performLogout());
     navigate("/");
   };
 
@@ -69,6 +69,15 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             path: "/laboratory/enter-results",
           },
         ];
+      case "pathologist":
+        return [
+          {
+            icon: "📄",
+            label: "Pathologist Reports",
+            id: "pathologist-reports",
+            path: "/reports/pathologist",
+          },
+        ];
       case "patient":
         return [
           {
@@ -123,6 +132,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             path: "/admin/activity-logs",
           },
         ];
+
       default:
         return [];
     }
@@ -141,10 +151,10 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
           <div className="flex items-center">
             <img
               src="/logo.png"
-              alt="World Laboratory Service Logo"
+              alt="World Basic Laboratory Service Logo"
               className="w-8 h-8 mr-3 rounded-full bg-white object-contain"
             />
-            <span className="font-bold text-md">World Laboratory Center</span>
+            <span className="font-bold text-md">World Basic Laboratory</span>
           </div>
         )}
         <button

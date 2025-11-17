@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { getProfile, logout } from "../store/slices/authSlice";
+import { getProfile, logout, performLogout } from "../store/slices/authSlice";
 
 export const useAuth = () => {
   const dispatch = useDispatch();
@@ -17,7 +17,7 @@ export const useAuth = () => {
   }, [token, user, dispatch]);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(performLogout());
     navigate("/");
   };
 

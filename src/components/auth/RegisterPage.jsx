@@ -47,7 +47,7 @@ const RegisterPage = () => {
           navigate("/receptionist/dashboard");
           break;
         case "laboratorist":
-          navigate("/laboratory/dashboard");
+          navigate("/laboratory/workbench");
           break;
         case "patient":
           navigate("/patient/dashboard");
@@ -157,14 +157,14 @@ const RegisterPage = () => {
           <div className="flex items-center">
             <img
               src="/logo.png"
-              alt="World Laboratory Service Logo"
+              alt="World Basic Laboratory Service Logo"
               className="w-16 h-16 mr-3 rounded-full bg-white object-contain"
             />
-            <span className="font-bold text-xl">World Laboratory Center</span>
+            <span className="font-bold text-xl">World Basic Laboratory</span>
           </div>
           <h1 className="text-2xl font-bold text-[#085DB6]">Create Account</h1>
           <p className="text-gray-600 mt-2">
-            Join world laboratory center Laboratory System
+            Join World Basic Laboratory Laboratory System
           </p>
         </div>
 

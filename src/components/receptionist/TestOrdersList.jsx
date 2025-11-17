@@ -20,7 +20,7 @@ const TestOrdersList = () => {
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchTestOrders({})); // fetch all; add params if backend supports
+    dispatch(fetchTestOrders({}));
     if (!Array.isArray(tests) || tests.length === 0) {
       dispatch(fetchTests());
     }
@@ -87,7 +87,21 @@ const TestOrdersList = () => {
       toast.error(typeof e === "string" ? e : "Failed to fetch results");
     }
   };
+  const openPrint = (order) => {
+    // Open new window for printing
+    const printWindow = window.open(
+      `/print-report?orderId=${order.id}`,
+      "_blank",
+      "width=1200,height=800,scrollbars=yes"
+    );
 
+    setTimeout(() => {
+      if (printWindow) {
+        printWindow.focus();
+        // The print will be triggered from the new window component
+      }
+    }, 1000);
+  };
   const closeResults = () => {
     setSelectedOrder(null);
     setShowResults(false);
@@ -243,7 +257,12 @@ const TestOrdersList = () => {
                             >
                               View Results
                             </button>
-                            {/* Add more actions if needed */}
+                            <button
+                              onClick={() => openPrint(o)}
+                              className="text-sm font-medium text-[#085DB6] hover:text-[#074a9b]"
+                            >
+                              Print
+                            </button>
                           </div>
                         </td>
                       </tr>

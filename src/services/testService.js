@@ -50,6 +50,20 @@ const testService = {
   deleteParameter: (id) => {
     return api.delete(`/test-parameters/${id}`);
   },
+
+  // Sample Types endpoints
+  getAllSampleTypes: (activeOnly = true) =>
+    api.get("/sample-types", { params: { active: activeOnly } }),
+
+  getSampleTypeById: (id) => api.get(`/sample-types/${id}`),
+
+  createSampleType: (sampleTypeData) =>
+    api.post("/sample-types", sampleTypeData),
+
+  updateSampleType: (id, sampleTypeData) =>
+    api.put(`/sample-types/${id}`, sampleTypeData),
+
+  deleteSampleType: (id) => api.delete(`/sample-types/${id}`),
 };
 
 export default testService;

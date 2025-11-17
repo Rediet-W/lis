@@ -30,6 +30,7 @@ import TestOrdersList from "./components/receptionist/TestOrdersList";
 import Dashboard from "./components/laboratory/Dashboard";
 import TestWorkbench from "./components/laboratory/TestWorkbench";
 import ResultEntryForm from "./components/laboratory/ResultEntryForm";
+import PathologistReportsList from "./components/pathologist/PathologistReportsList";
 
 // Patient Components
 import PatientDashboard from "./components/patient/Dashboard";
@@ -50,6 +51,7 @@ import Sidebar from "./components/common/Sidebar";
 import PrintDetailedReport from "./components/reports/printResults";
 
 import { useLocation } from "react-router-dom";
+import PrintReportPage from "./components/reports/printReportPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -219,7 +221,7 @@ const AppContent = () => {
               </ProtectedRoute>
             }
           />
-          {/* Laboratory Routes */}
+          {/* Laboratory Routes 
           <Route
             path="/laboratory/dashboard"
             element={
@@ -229,7 +231,7 @@ const AppContent = () => {
                 </AppLayout>
               </ProtectedRoute>
             }
-          />
+          />*/}
           {/* <Route
             path="/laboratory/pending-tests"
             element={
@@ -244,7 +246,7 @@ const AppContent = () => {
             path="/laboratory/workbench"
             element={
               <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
-                <AppLayout title="Lab Workbench">
+                <AppLayout>
                   <TestWorkbench />
                 </AppLayout>
               </ProtectedRoute>
@@ -256,6 +258,18 @@ const AppContent = () => {
               <ProtectedRoute allowedRoles={["laboratorist", "admin"]}>
                 <AppLayout title="Enter Test Results">
                   <ResultEntryForm />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/pathologist"
+            element={
+              <ProtectedRoute
+                allowedRoles={["laboratorist", "admin", "pathologist"]}
+              >
+                <AppLayout title="Pathologist Reports">
+                  <PathologistReportsList />
                 </AppLayout>
               </ProtectedRoute>
             }
@@ -353,7 +367,7 @@ const AppContent = () => {
                   "patient",
                 ]}
               >
-                <PrintDetailedReport />
+                <PrintReportPage />
               </ProtectedRoute>
             }
           />
@@ -364,7 +378,7 @@ const AppContent = () => {
           />
           <Route
             path="/laboratory"
-            element={<Navigate to="/laboratory/dashboard" replace />}
+            element={<Navigate to="/laboratory/workbench" replace />}
           />
           <Route
             path="/patient"

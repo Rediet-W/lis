@@ -95,10 +95,13 @@ const LoginPage = () => {
             navigate("/receptionist/dashboard");
             break;
           case "laboratorist":
-            navigate("/laboratory/dashboard");
+            navigate("/laboratory/workbench");
             break;
           case "patient":
             navigate("/patient/dashboard");
+            break;
+          case "pathologist":
+            navigate("/reports/pathologist");
             break;
           default:
             navigate("/dashboard");
@@ -121,10 +124,10 @@ const LoginPage = () => {
           <div className="flex items-center flex-col">
             <img
               src="/logo.png"
-              alt="World Laboratory Service Logo"
+              alt="World Basic Laboratory Service Logo"
               className="w-16 h-16 mr-3 rounded-full bg-white object-contain"
             />
-            <span className="font-bold text-xl">World Laboratory Center</span>
+            <span className="font-bold text-xl">World Basic Laboratory</span>
           </div>
         </div>
 

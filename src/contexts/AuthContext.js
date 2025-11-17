@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { getProfile, logout } from "../store/slices/authSlice";
+import { getProfile, performLogout } from "../store/slices/authSlice";
 
 const AuthContext = createContext();
 
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(performLogout());
   };
 
   const value = {

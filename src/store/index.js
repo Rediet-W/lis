@@ -12,6 +12,7 @@ import userSlice from "./slices/userSlice";
 import testParameterSlice from "./slices/testParameterSlice";
 import dynamicQuestionSlice from "./slices/dynamicQuestionSlice";
 import referenceRangeSlice from "./slices/referenceRangeSlice";
+import pathologistReportSlice from "./slices/pathologistResultSlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     testParameters: testParameterSlice,
     dynamicQuestions: dynamicQuestionSlice,
     referenceRanges: referenceRangeSlice,
+    pathologistReports: pathologistReportSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

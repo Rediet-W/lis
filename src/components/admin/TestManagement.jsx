@@ -11,6 +11,10 @@ import {
   updateCategory,
   deleteCategory,
   clearError,
+  fetchSampleTypes,
+  createSampleType,
+  updateSampleType,
+  deleteSampleType,
 } from "../../store/slices/testSlice";
 import {
   fetchParametersByTest,
@@ -63,12 +67,25 @@ const TestManagement = () => {
     parameter_name: "",
     unit: "",
   });
+  const [showSampleTypeModal, setShowSampleTypeModal] = useState(false);
+  const [editingSampleType, setEditingSampleType] = useState(null);
+  const [showSampleTypeDeleteConfirm, setShowSampleTypeDeleteConfirm] =
+    useState(null);
+  const [newSampleType, setNewSampleType] = useState({
+    name: "",
+    description: "",
+    is_active: 1,
+  });
+
+  // grab sample types from store
+  const sampleTypes = useSelector((state) => state.tests.sampleTypes) || [];
+  console.log("Sample Types:", sampleTypes);
 
   const [newTest, setNewTest] = useState({
     category_id: "",
     name: "",
     description: "",
-    sample_type: "serum",
+    sample_type_id: "",
     sample_volume: "",
     tube_type: "EDTA",
     processing_time: "",
@@ -95,6 +112,7 @@ const TestManagement = () => {
   useEffect(() => {
     dispatch(fetchTests());
     dispatch(fetchTestCategories());
+    dispatch(fetchSampleTypes());
   }, [dispatch]);
 
   useEffect(() => {
@@ -123,7 +141,7 @@ const TestManagement = () => {
       category_id: parseInt(newTest.category_id),
       name: newTest.name.trim(),
       description: newTest.description?.trim() || "",
-      sample_type: newTest.sample_type,
+      sample_type_id: newTest.sample_type_id,
       sample_volume: newTest.sample_volume?.trim() || "",
       tube_type: newTest.tube_type,
       processing_time: newTest.processing_time?.trim() || "",
@@ -140,7 +158,7 @@ const TestManagement = () => {
         category_id: "",
         name: "",
         description: "",
-        sample_type: "serum",
+        sample_type_id: "",
         sample_volume: "",
         tube_type: "EDTA",
         processing_time: "",
@@ -175,7 +193,7 @@ const TestManagement = () => {
       category_id: parseInt(editingTest.category_id),
       name: editingTest.name.trim(),
       description: editingTest.description?.trim() || "",
-      sample_type: editingTest.sample_type,
+      sample_type_id: editingTest.sample_type_id,
       sample_volume: editingTest.sample_volume?.trim() || "",
       tube_type: editingTest.tube_type,
       processing_time: editingTest.processing_time?.trim() || "",
@@ -375,7 +393,6 @@ const TestManagement = () => {
   });
   // Enum options
   const fieldTypes = ["checkbox", "radio", "dropdown", "text"];
-  const sampleTypes = ["serum", "plasma", "whole_blood", "urine", "other"];
   const genders = ["male", "female", "both"];
   const { questionsByTest, loading: questionsLoading } = useSelector(
     (state) => state.dynamicQuestions
@@ -583,6 +600,52 @@ const TestManagement = () => {
     });
     dispatch(clearRangesByParameter(parameterId));
   };
+  const openAddSampleTypeModal = () => {
+    setEditingSampleType(null);
+    setNewSampleType({
+      name: "",
+      description: "",
+      is_active: 1,
+    });
+    setShowSampleTypeModal(true);
+  };
+
+  const handleEditSampleType = (st) => {
+    setEditingSampleType(st);
+    setNewSampleType({
+      name: st.name || "",
+      description: st.description || "",
+      is_active: st.is_active ?? 1,
+    });
+    setShowSampleTypeModal(true);
+  };
+
+  const handleSaveSampleType = async () => {
+    try {
+      if (editingSampleType) {
+        await dispatch(
+          updateSampleType({ id: editingSampleType.id, data: newSampleType })
+        ).unwrap();
+      } else {
+        await dispatch(createSampleType(newSampleType)).unwrap();
+      }
+      setShowSampleTypeModal(false);
+      setEditingSampleType(null);
+      setNewSampleType({ name: "", description: "", is_active: 1 });
+    } catch (err) {
+      // errors are handled by thunks/toast; keep UI stable
+      console.error(err);
+    }
+  };
+
+  const handleDeleteSampleType = async (id) => {
+    try {
+      await dispatch(deleteSampleType(id)).unwrap();
+      setShowSampleTypeDeleteConfirm(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   if (loading && tests.length === 0) {
     return (
       <div className="max-w-7xl mx-auto p-6">
@@ -593,6 +656,7 @@ const TestManagement = () => {
     );
   }
 
+  console.log("filtered tests", filteredTests);
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
@@ -612,6 +676,12 @@ const TestManagement = () => {
               className="bg-[#36F1A2] text-[#235F72] px-6 py-3 rounded-lg hover:bg-[#2dd191] transition duration-200 font-semibold"
             >
               Manage Categories
+            </button>
+            <button
+              onClick={openAddSampleTypeModal}
+              className="bg-[#36F1A2] text-[#235F72] px-6 py-3 rounded-lg hover:bg-[#2dd191] transition duration-200 font-semibold"
+            >
+              Manage Sample Types
             </button>
             <button
               onClick={() => setShowAddModal(true)}
@@ -691,7 +761,7 @@ const TestManagement = () => {
                   </td>
                   <td className="py-4 px-4">
                     <div className="text-sm text-gray-600 capitalize">
-                      {test.sample_type || "N/A"}
+                      {test.sample_type_name || "N/A"}
                     </div>
                   </td>
                   <td className="py-4 px-4">
@@ -840,17 +910,29 @@ const TestManagement = () => {
                       Sample Type *
                     </label>
                     <select
-                      value={newTest.sample_type}
+                      value={newTest.sample_type_id}
                       onChange={(e) =>
-                        setNewTest({ ...newTest, sample_type: e.target.value })
+                        setNewTest({
+                          ...newTest,
+                          sample_type_id: e.target.value,
+                        })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     >
-                      {sampleTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                      <option value="">Select Sample Type</option>
+                      {sampleTypes && sampleTypes.length > 0 ? (
+                        sampleTypes
+                          .filter((st) => st && st.id)
+                          .map((st) => (
+                            <option key={st.id} value={st.id}>
+                              {st.name}
+                            </option>
+                          ))
+                      ) : (
+                        <option value="" disabled>
+                          Loading sample types...
                         </option>
-                      ))}
+                      )}
                     </select>
                   </div>
 
@@ -1062,18 +1144,19 @@ const TestManagement = () => {
                       Sample Type *
                     </label>
                     <select
-                      value={editingTest.sample_type}
+                      value={editingTest.sample_type_id}
                       onChange={(e) =>
                         setEditingTest({
                           ...editingTest,
-                          sample_type: e.target.value,
+                          sample_type_id: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     >
-                      {sampleTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type.charAt(0).toUpperCase() + type.slice(1)}
+                      <option value="">Select Sample Type</option>
+                      {sampleTypes.map((st) => (
+                        <option key={st.id} value={st.id}>
+                          {st.name}
                         </option>
                       ))}
                     </select>
@@ -2070,6 +2153,7 @@ Option 3`}
                   Add New Reference Range
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* In the Reference Ranges Modal */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Sample Type
@@ -2084,17 +2168,20 @@ Option 3`}
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
                     >
-                      {sampleTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type
-                            .split("_")
-                            .map(
-                              (word) =>
-                                word.charAt(0).toUpperCase() + word.slice(1)
-                            )
-                            .join(" ")}
+                      <option value="">Select Sample Type</option>
+                      {sampleTypes && sampleTypes.length > 0 ? (
+                        sampleTypes
+                          .filter((st) => st && st.id && st.name)
+                          .map((st) => (
+                            <option key={st.id} value={st.name}>
+                              {st.name}
+                            </option>
+                          ))
+                      ) : (
+                        <option value="" disabled>
+                          Loading sample types...
                         </option>
-                      ))}
+                      )}
                     </select>
                   </div>
                   <div>
@@ -2368,6 +2455,220 @@ Option 3`}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
               >
                 Delete Range
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Sample Type Management Modal */}
+      {showSampleTypeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-[#235F72]">
+                  Manage Sample Types
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowSampleTypeModal(false);
+                    setEditingSampleType(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Add Sample Type Form */}
+              <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-[#235F72] mb-4">
+                  {editingSampleType
+                    ? "Edit Sample Type"
+                    : "Add New Sample Type"}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sample Type Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newSampleType.name}
+                      onChange={(e) =>
+                        setNewSampleType({
+                          ...newSampleType,
+                          name: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
+                      placeholder="e.g., Blood, Urine, Serum"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      value={newSampleType.description}
+                      onChange={(e) =>
+                        setNewSampleType({
+                          ...newSampleType,
+                          description: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent"
+                      placeholder="Sample type description"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={Number(newSampleType.is_active) === 1}
+                      onChange={(e) =>
+                        setNewSampleType({
+                          ...newSampleType,
+                          is_active: e.target.checked ? 1 : 0,
+                        })
+                      }
+                      className="mr-2 text-[#36F1A2] focus:ring-[#36F1A2]"
+                    />
+                    <span className="text-sm text-gray-700">Active</span>
+                  </label>
+                </div>
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={handleSaveSampleType}
+                    className="px-4 py-2 bg-[#235F72] text-white rounded-lg hover:bg-[#1a4a5a] transition duration-200"
+                  >
+                    {editingSampleType
+                      ? "Update Sample Type"
+                      : "Add Sample Type"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Sample Types List */}
+              <div>
+                <h3 className="text-lg font-semibold text-[#235F72] mb-4">
+                  Existing Sample Types
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 bg-gray-50">
+                        <th className="text-left py-3 px-4 text-[#235F72] font-semibold text-sm">
+                          Name
+                        </th>
+                        <th className="text-left py-3 px-4 text-[#235F72] font-semibold text-sm">
+                          Description
+                        </th>
+                        <th className="text-left py-3 px-4 text-[#235F72] font-semibold text-sm">
+                          Status
+                        </th>
+                        <th className="text-left py-3 px-4 text-[#235F72] font-semibold text-sm">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sampleTypes && sampleTypes.length > 0 ? (
+                        sampleTypes
+                          .filter((st) => st && st.id)
+                          .map((st) => (
+                            <tr
+                              key={st.id}
+                              className="border-b border-gray-100 hover:bg-gray-50"
+                            >
+                              <td className="py-3 px-4">
+                                <div className="font-medium text-[#235F72] text-sm">
+                                  {st.name || "N/A"}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-sm text-gray-600">
+                                  {st.description || "No description"}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <span
+                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    st.is_active
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {st.is_active ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => handleEditSampleType(st)}
+                                    className="text-[#085DB6] hover:text-[#074a9b] font-medium text-sm"
+                                  >
+                                    Edit
+                                  </button>
+                                  <span className="text-gray-300">|</span>
+                                  <button
+                                    onClick={() =>
+                                      setShowSampleTypeDeleteConfirm(st.id)
+                                    }
+                                    className="text-red-600 hover:text-red-800 font-medium text-sm"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="4"
+                            className="py-8 text-center text-gray-500"
+                          >
+                            No sample types found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sample Type Delete Confirmation Modal */}
+      {showSampleTypeDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-[#235F72] mb-4">
+              Confirm Delete
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this sample type? Tests using this
+              sample type will need to be updated.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowSampleTypeDeleteConfirm(null)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  handleDeleteSampleType(showSampleTypeDeleteConfirm)
+                }
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200"
+              >
+                Delete Sample Type
               </button>
             </div>
           </div>

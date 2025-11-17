@@ -12,8 +12,10 @@ export const fetchTestOrders = createAsyncThunk(
         filters,
         auth.token
       );
+      console.log("Fetched Test Orders:", response.data);
       return response.data;
     } catch (error) {
+      console.error("Failed to fetch test orders:", error);
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch test orders"
       );

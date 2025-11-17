@@ -18,7 +18,7 @@ const ProfilePage = () => {
     // backend fields only
     full_name: "",
     card_number: "",
-    date_of_birth: "",
+    age: "",
     gender: "",
     phone: "",
     address: "",
@@ -41,8 +41,8 @@ const ProfilePage = () => {
     setFormData({
       full_name: currentPatient.full_name || "",
       card_number: currentPatient.card_number || "",
-      date_of_birth: currentPatient.date_of_birth
-        ? new Date(currentPatient.date_of_birth).toISOString().slice(0, 10)
+      age: currentPatient.age
+        ? new Date(currentPatient.age).toISOString().slice(0, 10)
         : "",
       gender: currentPatient.gender || "",
       phone: currentPatient.phone || "",
@@ -57,7 +57,7 @@ const ProfilePage = () => {
   }, [currentPatient]);
 
   const age = useMemo(() => {
-    const dob = formData.date_of_birth;
+    const dob = formData.age;
     if (!dob) return null;
     const birth = new Date(dob);
     const today = new Date();
@@ -65,7 +65,7 @@ const ProfilePage = () => {
     const m = today.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
     return a;
-  }, [formData.date_of_birth]);
+  }, [formData.age]);
 
   const handleSave = async () => {
     try {
@@ -83,7 +83,7 @@ const ProfilePage = () => {
           known_allergies: editable.known_allergies || null,
           chronic_conditions: editable.chronic_conditions || null,
           current_medications: editable.current_medications || null,
-          date_of_birth: editable.date_of_birth || null,
+          age: editable.age || null,
         })
       ).unwrap();
       setIsEditing(false);
@@ -175,13 +175,13 @@ const ProfilePage = () => {
               </label>
               <input
                 type="date"
-                value={formData.date_of_birth || ""}
-                onChange={(e) => onChange("date_of_birth", e.target.value)}
+                value={formData.age || ""}
+                onChange={(e) => onChange("age", e.target.value)}
                 disabled={!isEditing}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#36F1A2] focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
               />
               <div className="text-xs text-gray-500 mt-1">
-                Age: {formData.date_of_birth ? `${age} years` : "N/A"}
+                Age: {formData.age ? `${age} years` : "N/A"}
               </div>
             </div>
 

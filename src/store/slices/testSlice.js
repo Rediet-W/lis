@@ -146,7 +146,76 @@ export const deleteCategory = createAsyncThunk(
     }
   }
 );
+// Thunks for Sample Types
+export const fetchSampleTypes = createAsyncThunk(
+  "tests/fetchSampleTypes",
+  async (activeOnly = true, { rejectWithValue }) => {
+    try {
+      const response = await testService.getAllSampleTypes(activeOnly);
+      console.log("Fetched Sample Types:", response.data);
+      return response.data;
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Failed to fetch sample types";
+      toast.error(errorMsg);
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
 
+export const createSampleType = createAsyncThunk(
+  "tests/createSampleType",
+  async (sampleTypeData, { rejectWithValue }) => {
+    try {
+      const response = await testService.createSampleType(sampleTypeData);
+      toast.success(
+        response.data.message || "Sample type created successfully"
+      );
+      return response.data.data;
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Failed to create sample type";
+      toast.error(errorMsg);
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const updateSampleType = createAsyncThunk(
+  "tests/updateSampleType",
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await testService.updateSampleType(id, data);
+      toast.success(
+        response.data.message || "Sample type updated successfully"
+      );
+      return response.data.data;
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Failed to update sample type";
+      toast.error(errorMsg);
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const deleteSampleType = createAsyncThunk(
+  "tests/deleteSampleType",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await testService.deleteSampleType(id);
+      toast.success(
+        response.data.message || "Sample type deleted successfully"
+      );
+      return id;
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Failed to delete sample type";
+      toast.error(errorMsg);
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
 const testSlice = createSlice({
   name: "tests",
   initialState: {
@@ -271,6 +340,29 @@ const testSlice = createSlice({
       .addCase(deleteCategory.fulfilled, (state, action) => {
         state.testCategories = state.testCategories.filter(
           (cat) => cat.id !== action.payload
+        );
+      })
+      // Fetch Sample Types
+      .addCase(fetchSampleTypes.fulfilled, (state, action) => {
+        state.sampleTypes = action.payload;
+      })
+      // Create Sample Type
+      .addCase(createSampleType.fulfilled, (state, action) => {
+        state.sampleTypes.push(action.payload);
+      })
+      // Update Sample Type
+      .addCase(updateSampleType.fulfilled, (state, action) => {
+        const index = state.sampleTypes.findIndex(
+          (st) => st.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.sampleTypes[index] = action.payload;
+        }
+      })
+      // Delete Sample Type
+      .addCase(deleteSampleType.fulfilled, (state, action) => {
+        state.sampleTypes = state.sampleTypes.filter(
+          (st) => st.id !== action.payload
         );
       });
   },
