@@ -25,7 +25,6 @@ export const createUser = createAsyncThunk(
       toast.success(res.data.message || "User created successfully");
       return res.data.data; // Return the created user object
     } catch (err) {
-      console.log("err", err);
       const errorMsg = err?.response?.data?.errors || "Failed to create user";
       toast.error(errorMsg);
       return rejectWithValue(errorMsg);

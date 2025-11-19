@@ -131,6 +131,12 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
             id: "activity",
             path: "/admin/activity-logs",
           },
+          {
+            icon: "📄",
+            label: "Pathologist Reports",
+            id: "pathologist-reports",
+            path: "/reports/pathologist",
+          },
         ];
 
       default:

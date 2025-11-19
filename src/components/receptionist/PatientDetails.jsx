@@ -26,7 +26,6 @@ const PatientDetails = () => {
     loading: patientLoading,
     error: patientError,
   } = useSelector((s) => s.patients || {});
-  console.log(currentPatient, id);
   const { visits, loading: visitsLoading } = useSelector((s) => s.visits || {});
   const {
     testOrders,

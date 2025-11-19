@@ -79,7 +79,6 @@ const TestManagement = () => {
 
   // grab sample types from store
   const sampleTypes = useSelector((state) => state.tests.sampleTypes) || [];
-  console.log("Sample Types:", sampleTypes);
 
   const [newTest, setNewTest] = useState({
     category_id: "",
@@ -656,7 +655,6 @@ const TestManagement = () => {
     );
   }
 
-  console.log("filtered tests", filteredTests);
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}

@@ -70,7 +70,6 @@ export const createPatient = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      console.log("error", error.response);
       return rejectWithValue(
         error.response?.data?.errors || "Failed to create patient"
       );

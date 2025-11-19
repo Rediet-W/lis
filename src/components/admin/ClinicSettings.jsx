@@ -6,7 +6,6 @@ import { getClinic, updateClinic } from "../../store/slices/clinicSlice";
 const ClinicSettings = () => {
   const dispatch = useDispatch();
   const { clinic, loading, error } = useSelector((state) => state.clinic);
-  console.log("clinic data:", clinic);
   const [clinicInfo, setClinicInfo] = useState({
     name: "",
     address: "",
@@ -29,7 +28,6 @@ const ClinicSettings = () => {
   // Update form when clinic data is loaded
   useEffect(() => {
     if (clinic) {
-      console.log("Setting clinic data:", clinic);
       setClinicInfo({
         name: clinic.name || "",
         address: clinic.address || "",
@@ -71,10 +69,7 @@ const ClinicSettings = () => {
         updateData.test_list = testList;
       }
 
-      console.log("Sending update data:", updateData);
-
       const result = await dispatch(updateClinic(updateData)).unwrap();
-      console.log("Update result:", result);
 
       setIsEditing(false);
       setIsEditingTests(false);
@@ -162,11 +157,7 @@ const ClinicSettings = () => {
   };
 
   // Debug: Log state changes
-  useEffect(() => {
-    console.log("Current clinicInfo:", clinicInfo);
-    console.log("Current testList:", testList);
-    console.log("Editing states - info:", isEditing, "tests:", isEditingTests);
-  }, [clinicInfo, testList, isEditing, isEditingTests]);
+  useEffect(() => {}, [clinicInfo, testList, isEditing, isEditingTests]);
 
   // Show loading state during initial load
   if (isInitialLoad && loading) {

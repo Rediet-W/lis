@@ -82,8 +82,6 @@ const ResultEntryForm = ({
       ? testOrderResults
       : testOrderResults?.data || [];
 
-    console.log("Existing test order results:", list);
-
     // Find main test result
     const mainResultData = list.find(
       (r) => r.test_order_id === order?.id && !r.test_parameter_id
@@ -287,12 +285,6 @@ const ResultEntryForm = ({
     setIsSubmitting(true);
 
     try {
-      console.log("Saving results...", {
-        mainResult,
-        parameterResults,
-        isFinal,
-      });
-
       let mainResultId = null;
 
       // 1. First, check if we need to create/update main test result
@@ -341,13 +333,11 @@ const ResultEntryForm = ({
             })
           ).unwrap();
           mainResultId = existingMain.id;
-          console.log("Updated main test result:", result);
         } else {
           const result = await dispatch(
             createTestResult(mainResultData)
           ).unwrap();
           mainResultId = result.id;
-          console.log("Created main test result:", result);
         }
       }
 
@@ -386,7 +376,6 @@ const ResultEntryForm = ({
             ).unwrap();
             mainResultId = result.id;
           }
-          console.log("Created main result for parameters:", mainResultId);
         }
 
         // Now save all parameter results
@@ -443,11 +432,7 @@ const ResultEntryForm = ({
             }
           }
         }
-        console.log("All parameter results saved");
       }
-
-      console.log("Results saved successfully");
-
       // Show success toast
       toast.success(
         isFinal

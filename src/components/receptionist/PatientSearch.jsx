@@ -32,7 +32,6 @@ const PatientSearch = () => {
     }
 
     const filtered = patientList.filter((patient) => {
-      console.log("one", patient);
       const searchLower = searchTerm.toLowerCase();
 
       switch (searchType) {

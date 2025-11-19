@@ -27,7 +27,6 @@ import Visits from "./components/receptionist/Visits";
 import TestOrdersList from "./components/receptionist/TestOrdersList";
 
 // Laboratory Components
-import Dashboard from "./components/laboratory/Dashboard";
 import TestWorkbench from "./components/laboratory/TestWorkbench";
 import ResultEntryForm from "./components/laboratory/ResultEntryForm";
 import PathologistReportsList from "./components/pathologist/PathologistReportsList";
@@ -48,8 +47,6 @@ import ClinicSettings from "./components/admin/ClinicSettings";
 import Header from "./components/common/Header";
 import Sidebar from "./components/common/Sidebar";
 
-import PrintDetailedReport from "./components/reports/printResults";
-
 import { useLocation } from "react-router-dom";
 import PrintReportPage from "./components/reports/printReportPage";
 
@@ -58,7 +55,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useAuth();
 
   if (!user) {
-    console.log("no user");
+    // console.log("no user");
     return <Navigate to="/" replace />;
   }
 

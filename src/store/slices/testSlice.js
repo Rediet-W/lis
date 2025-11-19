@@ -152,7 +152,7 @@ export const fetchSampleTypes = createAsyncThunk(
   async (activeOnly = true, { rejectWithValue }) => {
     try {
       const response = await testService.getAllSampleTypes(activeOnly);
-      console.log("Fetched Sample Types:", response.data);
+
       return response.data;
     } catch (error) {
       const errorMsg =

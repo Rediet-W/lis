@@ -5,7 +5,7 @@ import { fetchTestOrderById } from "../../store/slices/testOrderSlice";
 const PrintDetailedReport = ({ testOrderId }) => {
   const dispatch = useDispatch();
   const { currentTestOrder } = useSelector((state) => state.testOrders);
-  console.log("currentTestOrder", currentTestOrder);
+
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState(null);
 

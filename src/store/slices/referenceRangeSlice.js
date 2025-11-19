@@ -30,7 +30,6 @@ export const fetchRangesByParameter = createAsyncThunk(
       });
       return { parameterId, ranges: response.data.data };
     } catch (error) {
-      console.log("Full error:", error);
       const errorMsg =
         error.response?.data?.message ||
         error.message ||

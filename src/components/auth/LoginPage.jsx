@@ -22,7 +22,6 @@ const LoginPage = () => {
   // Handle successful login redirection
   useEffect(() => {
     if (isAuthenticated && user) {
-      console.log("Login successful, redirecting...", user);
       setIsSubmitting(false);
       toast.success(`Welcome back, ${user.full_name}!`, {
         position: "top-right",
@@ -52,7 +51,6 @@ const LoginPage = () => {
   // Handle Redux errors
   useEffect(() => {
     if (reduxError) {
-      console.log("Redux Error:", reduxError);
       setIsSubmitting(false);
       toast.error(reduxError, {
         position: "top-right",
